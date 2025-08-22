@@ -47,6 +47,11 @@ export const requestSuggestions = ({
           suggestedSentence: z.string().describe('The suggested sentence'),
           description: z.string().describe('The description of the suggestion'),
         }),
+        providerOptions: {
+          gateway: {
+            order: ['xai'], // Prefer xAI, fallback to other providers for reliability
+          },
+        },
       });
 
       for await (const element of elementStream) {

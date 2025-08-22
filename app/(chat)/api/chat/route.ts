@@ -175,6 +175,11 @@ export async function POST(request: Request) {
               dataStream,
             }),
           },
+          providerOptions: {
+            gateway: {
+              order: ['xai'], // Prefer xAI, fallback to other providers for reliability
+            },
+          },
           experimental_telemetry: {
             isEnabled: isProductionEnvironment,
             functionId: 'stream-text',
