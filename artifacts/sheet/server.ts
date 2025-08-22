@@ -16,6 +16,11 @@ export const sheetDocumentHandler = createDocumentHandler<'sheet'>({
       schema: z.object({
         csv: z.string().describe('CSV data'),
       }),
+      providerOptions: {
+        gateway: {
+          order: ['xai'], // Prefer xAI, fallback to other providers for reliability
+        },
+      },
     });
 
     for await (const delta of fullStream) {
@@ -55,6 +60,11 @@ export const sheetDocumentHandler = createDocumentHandler<'sheet'>({
       schema: z.object({
         csv: z.string(),
       }),
+      providerOptions: {
+        gateway: {
+          order: ['xai'], // Prefer xAI, fallback to other providers for reliability
+        },
+      },
     });
 
     for await (const delta of fullStream) {

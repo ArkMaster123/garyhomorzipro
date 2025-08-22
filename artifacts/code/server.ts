@@ -16,6 +16,11 @@ export const codeDocumentHandler = createDocumentHandler<'code'>({
       schema: z.object({
         code: z.string(),
       }),
+      providerOptions: {
+        gateway: {
+          order: ['xai'], // Prefer xAI, fallback to other providers for reliability
+        },
+      },
     });
 
     for await (const delta of fullStream) {
@@ -49,6 +54,11 @@ export const codeDocumentHandler = createDocumentHandler<'code'>({
       schema: z.object({
         code: z.string(),
       }),
+      providerOptions: {
+        gateway: {
+          order: ['xai'], // Prefer xAI, fallback to other providers for reliability
+        },
+      },
     });
 
     for await (const delta of fullStream) {

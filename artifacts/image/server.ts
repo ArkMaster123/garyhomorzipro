@@ -5,8 +5,11 @@ import { experimental_generateImage } from 'ai';
 export const imageDocumentHandler = createDocumentHandler<'image'>({
   kind: 'image',
   onCreateDocument: async ({ title, dataStream }) => {
+    // Temporarily disabled - AI Gateway doesn't support image models yet
+    // Original code used: myProvider.imageModel('small-model') with xai('grok-2-image')
     let draftContent = '';
 
+    /* 
     const { image } = await experimental_generateImage({
       model: myProvider.imageModel('small-model'),
       prompt: title,
@@ -20,12 +23,22 @@ export const imageDocumentHandler = createDocumentHandler<'image'>({
       data: image.base64,
       transient: true,
     });
+    */
+
+    dataStream.write({
+      type: 'data-imageDelta',
+      data: '', // Placeholder until AI Gateway supports image models
+      transient: true,
+    });
 
     return draftContent;
   },
   onUpdateDocument: async ({ description, dataStream }) => {
+    // Temporarily disabled - AI Gateway doesn't support image models yet
+    // Original code used: myProvider.imageModel('small-model') with xai('grok-2-image')
     let draftContent = '';
 
+    /* 
     const { image } = await experimental_generateImage({
       model: myProvider.imageModel('small-model'),
       prompt: description,
@@ -37,6 +50,13 @@ export const imageDocumentHandler = createDocumentHandler<'image'>({
     dataStream.write({
       type: 'data-imageDelta',
       data: image.base64,
+      transient: true,
+    });
+    */
+
+    dataStream.write({
+      type: 'data-imageDelta',
+      data: '', // Placeholder until AI Gateway supports image models
       transient: true,
     });
 

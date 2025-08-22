@@ -43,6 +43,9 @@ export const textDocumentHandler = createDocumentHandler<'text'>({
       experimental_transform: smoothStream({ chunking: 'word' }),
       prompt: description,
       providerOptions: {
+        gateway: {
+          order: ['xai'], // Prefer xAI for consistency, fallback to other providers if needed
+        },
         openai: {
           prediction: {
             type: 'content',
