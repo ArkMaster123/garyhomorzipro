@@ -5,15 +5,17 @@ import { useRouter } from 'next/navigation';
 import { useWindowSize } from 'usehooks-ts';
 
 import { ProviderSelector } from '@/components/provider-selector';
+import { PersonaSelector } from '@/components/persona-selector';
 import { SidebarToggle } from '@/components/sidebar-toggle';
 import { Button } from '@/components/ui/button';
 import { PlusIcon, ShareIcon } from './icons';
 import { useSidebar } from './ui/sidebar';
-import { memo } from 'react';
+import { memo, useState, useEffect } from 'react';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import { type VisibilityType, VisibilitySelector } from './visibility-selector';
 import type { Session } from 'next-auth';
 import { toast } from './toast';
+import type { PersonaType } from '@/lib/ai/personas';
 
 function PureChatHeader({
   chatId,
@@ -32,8 +34,49 @@ function PureChatHeader({
 }) {
   const router = useRouter();
   const { open } = useSidebar();
+  const [currentPersona, setCurrentPersona] = useState<PersonaType>('default');
 
   const { width: windowWidth } = useWindowSize();
+
+  // Load user's persona preference
+  useEffect(() => {
+    const loadPersona = async () => {
+      try {
+        const response = await fetch('/api/persona');
+        const data = await response.json();
+        setCurrentPersona(data.persona || 'default');
+      } catch (error) {
+        console.error('Failed to load persona:', error);
+      }
+    };
+
+    if (session?.user?.id) {
+      loadPersona();
+    }
+  }, [session?.user?.id]);
+
+  const handlePersonaChange = async (persona: PersonaType) => {
+    try {
+      const response = await fetch('/api/persona', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ persona }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update persona');
+      }
+
+      setCurrentPersona(persona);
+      // Refresh the page to apply the new persona to the current chat
+      router.refresh();
+    } catch (error) {
+      console.error('Failed to update persona:', error);
+      throw error;
+    }
+  };
 
   const handleShareChat = async () => {
     const shareUrl = `${window.location.origin}/chat/${chatId}`;
@@ -83,11 +126,19 @@ function PureChatHeader({
         />
       )}
 
+      {!isReadonly && session?.user?.id && (
+        <PersonaSelector
+          currentPersona={currentPersona}
+          onPersonaChange={handlePersonaChange}
+          disabled={false}
+        />
+      )}
+
       {!isReadonly && (
         <VisibilitySelector
           chatId={chatId}
           selectedVisibilityType={selectedVisibilityType}
-          className="order-1 md:order-3"
+          className="order-1 md:order-4"
         />
       )}
 

@@ -14,6 +14,7 @@ import {
   getChatById,
   getMessageCountByUserId,
   getMessagesByChatId,
+  getUserPersona,
   saveChat,
   saveMessages,
 } from '@/lib/db/queries';
@@ -23,6 +24,7 @@ import { createDocument } from '@/lib/ai/tools/create-document';
 import { updateDocument } from '@/lib/ai/tools/update-document';
 import { requestSuggestions } from '@/lib/ai/tools/request-suggestions';
 import { getWeather } from '@/lib/ai/tools/get-weather';
+import { webSearch } from '@/lib/ai/tools/web-search';
 import { isProductionEnvironment } from '@/lib/constants';
 import { myProvider, createDynamicModel } from '@/lib/ai/providers';
 import { entitlementsByUserType } from '@/lib/ai/entitlements';
@@ -155,10 +157,19 @@ export async function POST(request: Request) {
     await createStreamId({ streamId, chatId: id });
 
     const stream = createUIMessageStream({
-      execute: ({ writer: dataStream }) => {
+      execute: async ({ writer: dataStream }) => {
+        // Get user's persona preference
+        const userPersona = session?.user?.id 
+          ? await getUserPersona(session.user.id)
+          : 'default';
+
         const result = streamText({
           model: createDynamicModel(effectiveModelId),
-          system: systemPrompt({ selectedChatModel: effectiveModelId, requestHints }),
+          system: systemPrompt({ 
+            selectedChatModel: effectiveModelId, 
+            requestHints, 
+            persona: userPersona as any 
+          }),
           messages: convertToModelMessages(uiMessages),
           stopWhen: stepCountIs(5),
           experimental_activeTools:
@@ -166,6 +177,7 @@ export async function POST(request: Request) {
               ? []
               : [
                   'getWeather',
+                  'webSearch',
                   'createDocument',
                   'updateDocument',
                   'requestSuggestions',
@@ -173,6 +185,7 @@ export async function POST(request: Request) {
           experimental_transform: smoothStream({ chunking: 'word' }),
           tools: {
             getWeather,
+            webSearch,
             createDocument: createDocument({ session, dataStream }),
             updateDocument: updateDocument({ session, dataStream }),
             requestSuggestions: requestSuggestions({

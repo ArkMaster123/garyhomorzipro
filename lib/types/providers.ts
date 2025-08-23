@@ -25,4 +25,8 @@ export interface GatewayModel {
   id: string;
   name: string;
   provider?: string;
+  specification?: {
+    provider?: string;
+    modelId?: string;
+  };
 }

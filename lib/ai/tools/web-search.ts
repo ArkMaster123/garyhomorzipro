@@ -1,0 +1,89 @@
+import { tool } from 'ai';
+import { z } from 'zod';
+
+export const webSearch = tool({
+  description: 'Search the web using Brave Search API to get current information, news, and real-time data',
+  inputSchema: z.object({
+    query: z.string().max(400).describe('The search query (max 400 characters)'),
+    count: z.number().min(1).max(20).default(10).describe('Number of search results to return (1-20)'),
+    country: z.string().length(2).default('US').describe('Country code for search results (e.g., US, GB, CA)'),
+    search_lang: z.string().default('en').describe('Search language preference'),
+    safesearch: z.enum(['off', 'moderate', 'strict']).default('moderate').describe('Safe search filter level'),
+    freshness: z.enum(['pd', 'pw', 'pm', 'py']).optional().describe('Filter by freshness: pd=24h, pw=7d, pm=31d, py=365d'),
+  }),
+  execute: async ({ query, count, country, search_lang, safesearch, freshness }) => {
+    const apiKey = process.env.BRAVE_SEARCH_API_KEY;
+    
+    if (!apiKey) {
+      throw new Error('BRAVE_SEARCH_API_KEY environment variable is not set');
+    }
+
+    // Build query parameters
+    const params = new URLSearchParams({
+      q: query,
+      count: count.toString(),
+      country,
+      search_lang,
+      safesearch,
+      result_filter: 'web', // Focus on web results
+      text_decorations: 'true', // Include highlighting
+      spellcheck: 'true', // Enable spellcheck
+    });
+
+    if (freshness) {
+      params.append('freshness', freshness);
+    }
+
+    try {
+      const response = await fetch(`https://api.search.brave.com/res/v1/web/search?${params}`, {
+        headers: {
+          'Accept': 'application/json',
+          'Accept-Encoding': 'gzip',
+          'X-Subscription-Token': apiKey,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Brave Search API error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      // Extract and format the most relevant information
+      const results = {
+        query: data.query?.original || query,
+        altered_query: data.query?.altered,
+        web_results: data.web?.results?.map((result: any) => ({
+          title: result.title,
+          url: result.url,
+          description: result.description,
+          published: result.age,
+          language: result.language,
+        })) || [],
+        infobox: data.infobox ? {
+          title: data.infobox.title,
+          description: data.infobox.description,
+          url: data.infobox.url,
+        } : null,
+        news: data.news?.results?.slice(0, 3).map((article: any) => ({
+          title: article.title,
+          url: article.url,
+          description: article.description,
+          published: article.age,
+          source: article.source,
+        })) || [],
+        faq: data.faq?.results?.slice(0, 3).map((faq: any) => ({
+          question: faq.question,
+          answer: faq.answer,
+          url: faq.url,
+        })) || [],
+        total_results: data.web?.results?.length || 0,
+      };
+
+      return results;
+    } catch (error) {
+      console.error('Web search error:', error);
+      throw new Error(`Failed to perform web search: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  },
+});

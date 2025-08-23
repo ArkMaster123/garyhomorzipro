@@ -552,6 +552,24 @@ export const StopIcon = ({ size = 16 }: { size?: number }) => {
   );
 };
 
+export const SearchIcon = ({ size = 16 }: { size?: number }) => {
+  return (
+    <svg
+      height={size}
+      viewBox="0 0 16 16"
+      width={size}
+      style={{ color: 'currentcolor' }}
+    >
+      <path
+        fillRule="evenodd"
+        clipRule="evenodd"
+        d="M11.5 7C11.5 9.48528 9.48528 11.5 7 11.5C4.51472 11.5 2.5 9.48528 2.5 7C2.5 4.51472 4.51472 2.5 7 2.5C9.48528 2.5 11.5 4.51472 11.5 7ZM10.5607 11.0607C9.74264 11.6425 8.71835 12 7 12C4.23858 12 2 9.76142 2 7C2 4.23858 4.23858 2 7 2C9.76142 2 12 4.23858 12 7C12 8.71835 11.6425 9.74264 11.0607 10.5607L13.7803 13.2803L13.4268 13.6339L13.2803 13.7803L10.5607 11.0607Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+};
+
 export const PaperclipIcon = ({ size = 16 }: { size?: number }) => {
   return (
     <svg

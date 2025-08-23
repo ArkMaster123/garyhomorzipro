@@ -1,5 +1,6 @@
 import type { ArtifactKind } from '@/components/artifact';
 import type { Geo } from '@vercel/functions';
+import { getPersonaPrompt, type PersonaType } from './personas';
 
 export const artifactsPrompt = `
 Artifacts is a special user interface mode that helps users with writing, editing, and other content creation tasks. When artifact is open, it is on the right side of the screen, while the conversation is on the left side. When creating or updating documents, changes are reflected in real-time on the artifacts and visible to the user.
@@ -53,16 +54,19 @@ About the origin of user's request:
 export const systemPrompt = ({
   selectedChatModel,
   requestHints,
+  persona = 'default',
 }: {
   selectedChatModel: string;
   requestHints: RequestHints;
+  persona?: PersonaType;
 }) => {
   const requestPrompt = getRequestPromptFromHints(requestHints);
+  const personaPrompt = getPersonaPrompt(persona);
 
   if (selectedChatModel === 'chat-model-reasoning') {
-    return `${regularPrompt}\n\n${requestPrompt}`;
+    return `${personaPrompt}\n\n${requestPrompt}`;
   } else {
-    return `${regularPrompt}\n\n${requestPrompt}\n\n${artifactsPrompt}`;
+    return `${personaPrompt}\n\n${requestPrompt}\n\n${artifactsPrompt}`;
   }
 };
 

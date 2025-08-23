@@ -113,10 +113,23 @@ export async function GET() {
     // Try to fetch models from the AI Gateway
     const allModels = await gateway.getAvailableModels();
     
+    // Return ALL models from gateway that are in our supported list OR have groq provider
+    const filteredModels = allModels.models.filter((model) => {
+      // Include if it's in our supported models list
+      if (SUPPORTED_MODELS.includes(model.id)) {
+        return true;
+      }
+      
+      // Also include any models served by Groq (even if not in our predefined list)
+      if (model.specification?.provider === 'groq') {
+        return true;
+      }
+      
+      return false;
+    });
+    
     return NextResponse.json({
-      models: allModels.models.filter((model) =>
-        SUPPORTED_MODELS.includes(model.id)
-      ),
+      models: filteredModels,
     });
   } catch (error) {
     console.error("Failed to fetch models from gateway:", error);
