@@ -182,7 +182,7 @@ export async function POST(request: Request) {
           },
           providerOptions: {
             gateway: {
-              order: ['xai'], // Prefer xAI, fallback to other providers for reliability
+              order: ['groq', 'xai'], // Prefer Groq for speed, fallback to xAI for reliability
             },
           },
           experimental_telemetry: {

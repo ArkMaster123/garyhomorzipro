@@ -51,6 +51,11 @@ const REASONING_MODELS = [
   // Perplexity reasoning models
   'perplexity/sonar-reasoning',
   'perplexity/sonar-reasoning-pro',
+  
+  // Groq reasoning models (Llama 3.1 variants support advanced reasoning)
+  'groq/llama-3.1-405b',
+  'groq/llama-3.1-70b',
+  'groq/llama-3.1-70b-instant',
 ];
 
 // Dynamic model factory for gateway models with reasoning support

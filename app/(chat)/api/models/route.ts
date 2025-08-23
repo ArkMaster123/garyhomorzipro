@@ -1,5 +1,5 @@
-import { gateway } from "@/lib/ai/gateway";
 import { NextResponse } from "next/server";
+import { gateway } from "@/lib/ai/gateway";
 
 // Supported models list - Latest and Greatest from AI Gateway! 🚀
 export const SUPPORTED_MODELS = [
@@ -36,6 +36,16 @@ export const SUPPORTED_MODELS = [
   "xai/grok-2-vision",     // Multimodal Grok
   "xai/grok-2",            // Previous generation
   
+  // ⚡ Groq - Lightning Fast Models (Replacing Meta)
+  "groq/llama-3.1-405b",                     // Latest Llama 3.1 (405B) - Ultra-fast! 🚀
+  "groq/llama-3.1-70b",                      // Llama 3.1 (70B) - Fast & powerful
+  "groq/llama-3.1-8b",                       // Llama 3.1 (8B) - Quick & efficient
+  "groq/llama-3.1-70b-instant",              // Instant Llama 3.1 (70B) - Real-time!
+  "groq/llama-3.1-8b-instant",               // Instant Llama 3.1 (8B) - Lightning fast
+  "groq/mixtral-8x7b-32768",                 // Mixtral with 32K context
+  "groq/gemma-2-27b-it",                     // Gemma 2 (27B) - Instruction tuned
+  "groq/gemma-2-9b-it",                      // Gemma 2 (9B) - Lightweight & fast
+  
   // 🔬 DeepSeek - Reasoning Masters
   "deepseek/deepseek-r1",                    // Latest reasoning model! 🔥
   "deepseek/deepseek-v3.1",                  // Latest general model
@@ -44,38 +54,26 @@ export const SUPPORTED_MODELS = [
   "deepseek/deepseek-r1-distill-llama-70b",  // Distilled reasoning
   
   // 🔍 Google - Gemini Family
-  "google/gemini-2.5-pro",       // Latest flagship!
-  "google/gemini-2.5-flash",     // Fast latest
-  "google/gemini-2.5-flash-lite", // Ultra-fast
-  "google/gemini-2.0-flash",     // Current generation
-  "google/gemini-2.0-flash-lite", // Efficient
-  "google/gemma-2-9b",           // Open model
+  "google/gemini-2.5-pro",                   // Latest Gemini Pro
+  "google/gemini-2.5-flash",                 // Fast Gemini Flash
+  "google/gemini-2.5-flash-lite",            // Lightweight Flash
+  "google/gemini-2.0-flash",                 // Previous Flash
+  "google/gemini-2.0-flash-lite",            // Lightweight 2.0
+  "google/gemma-2-9b",                       // Efficient Gemma
   
-  // 🦙 Meta - Llama Family
-  "meta/llama-4-maverick",  // Latest Llama-4! 🔥
-  "meta/llama-4-scout",     // Llama-4 variant
-  "meta/llama-3.3-70b",     // Latest 3.x series
-  "meta/llama-3.2-90b",     // Large context
-  "meta/llama-3.2-11b",     // Mid-size
-  "meta/llama-3.2-3b",      // Efficient
-  "meta/llama-3.1-70b",     // Proven large
-  "meta/llama-3.1-8b",      // Proven efficient
-  "meta/llama-3-70b",       // Classic large
-  "meta/llama-3-8b",        // Classic efficient
-  
-  // 🔮 Mistral - Code & Reasoning
-  "mistral/magistral-medium",    // Latest flagship
-  "mistral/magistral-small",     // Efficient flagship
-  "mistral/mistral-large",       // Large model
-  "mistral/mistral-small",       // Balanced
-  "mistral/codestral",           // Code specialist
-  "mistral/devstral-small",      // Dev-focused
-  "mistral/pixtral-large",       // Multimodal large
-  "mistral/pixtral-12b",         // Multimodal efficient
-  "mistral/mixtral-8x22b-instruct", // MoE model
-  "mistral/mistral-saba-24b",    // Mid-size
-  "mistral/ministral-8b",        // Efficient
-  "mistral/ministral-3b",        // Ultra-efficient
+  // 🌪️ Mistral - European Powerhouse
+  "mistral/magistral-medium",                 // Latest Mistral medium
+  "mistral/magistral-small",                  // Efficient Mistral small
+  "mistral/mistral-large",                    // Powerful Mistral large
+  "mistral/mistral-small",                    // Lightweight Mistral
+  "mistral/codestral",                        // Code-specialized Mistral
+  "mistral/devstral-small",                   // Developer-focused small
+  "mistral/pixtral-large",                    // Vision-capable large
+  "mistral/pixtral-12b",                      // Vision-capable 12B
+  "mistral/mixtral-8x22b-instruct",          // Mixtral instruction-tuned
+  "mistral/mistral-saba-24b",                 // Saba 24B model
+  "mistral/ministral-8b",                     // Mini Saba 8B
+  "mistral/ministral-3b",                     // Mini Saba 3B
   
   // 📊 Perplexity - Search-Augmented
   "perplexity/sonar-reasoning-pro", // Reasoning + Search
@@ -112,6 +110,7 @@ export const SUPPORTED_MODELS = [
 
 export async function GET() {
   try {
+    // Try to fetch models from the AI Gateway
     const allModels = await gateway.getAvailableModels();
     
     return NextResponse.json({
@@ -123,12 +122,67 @@ export async function GET() {
     console.error("Failed to fetch models from gateway:", error);
     
     // Return fallback models if gateway is unavailable
-    return NextResponse.json({
-      models: SUPPORTED_MODELS.map(id => ({
+    // Include Groq models manually since we know they're available
+    const fallbackModels = [
+      // ⚡ Groq - Lightning Fast Models (Replacing Meta)
+      {
+        id: "groq/llama-3.1-405b",
+        name: "Llama 3.1 405B - Ultra-fast! 🚀",
+        description: "Latest Llama 3.1 (405B) - Ultra-fast! Served by Groq with their custom Language Processing Units (LPUs) hardware.",
+        provider: "groq"
+      },
+      {
+        id: "groq/llama-3.1-70b",
+        name: "Llama 3.1 70B - Fast & powerful",
+        description: "Llama 3.1 (70B) - Fast & powerful. Served by Groq with their custom Language Processing Units (LPUs) hardware.",
+        provider: "groq"
+      },
+      {
+        id: "groq/llama-3.1-8b",
+        name: "Llama 3.1 8B - Quick & efficient",
+        description: "Llama 3.1 (8B) - Quick & efficient. Served by Groq with their custom Language Processing Units (LPUs) hardware.",
+        provider: "groq"
+      },
+      {
+        id: "groq/llama-3.1-70b-instant",
+        name: "Llama 3.1 70B Instant - Real-time!",
+        description: "Instant Llama 3.1 (70B) - Real-time! Served by Groq with their custom Language Processing Units (LPUs) hardware.",
+        provider: "groq"
+      },
+      {
+        id: "groq/llama-3.1-8b-instant",
+        name: "Llama 3.1 8B Instant - Lightning fast",
+        description: "Instant Llama 3.1 (8B) - Lightning fast! Served by Groq with their custom Language Processing Units (LPUs) hardware.",
+        provider: "groq"
+      },
+      {
+        id: "groq/mixtral-8x7b-32768",
+        name: "Mixtral 8x7B - 32K context",
+        description: "Mixtral with 32K context. Served by Groq with their custom Language Processing Units (LPUs) hardware.",
+        provider: "groq"
+      },
+      {
+        id: "groq/gemma-2-27b-it",
+        name: "Gemma 2 27B - Instruction tuned",
+        description: "Gemma 2 (27B) - Instruction tuned. Served by Groq with their custom Language Processing Units (LPUs) hardware.",
+        provider: "groq"
+      },
+      {
+        id: "groq/gemma-2-9b-it",
+        name: "Gemma 2 9B - Lightweight & fast",
+        description: "Gemma 2 (9B) - Lightweight & fast. Served by Groq with their custom Language Processing Units (LPUs) hardware.",
+        provider: "groq"
+      },
+      // ... existing fallback models
+      ...SUPPORTED_MODELS.filter(id => !id.startsWith('groq/')).map(id => ({
         id,
         name: id.split('/')[1] || id,
         provider: id.split('/')[0] || 'unknown',
       }))
+    ];
+    
+    return NextResponse.json({
+      models: fallbackModels
     });
   }
 }
