@@ -26,7 +26,8 @@ export function useAvailableModels() {
       }
 
       try {
-        const response = await fetch("/api/models");
+        // Add cache-busting parameter to force refresh
+        const response = await fetch(`/api/models?t=${Date.now()}`);
         if (!response.ok) {
           throw new Error("Failed to fetch models");
         }

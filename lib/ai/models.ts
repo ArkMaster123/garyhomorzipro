@@ -38,6 +38,11 @@ export const PROVIDER_GROUPS = {
     'xai/grok-3-mini', 'xai/grok-3-mini-fast',
     'xai/grok-2-vision', 'xai/grok-2'
   ],
+  'Groq': [
+    'groq/llama-3.1-405b', 'groq/llama-3.1-70b', 'groq/llama-3.1-8b',
+    'groq/llama-3.1-70b-instant', 'groq/llama-3.1-8b-instant',
+    'groq/mixtral-8x7b-32768', 'groq/gemma-2-9b-it', 'groq/gemma-2-27b-it'
+  ],
   'DeepSeek': [
     'deepseek/deepseek-r1', 'deepseek/deepseek-v3.1', 'deepseek/deepseek-v3.1-base',
     'deepseek/deepseek-v3', 'deepseek/deepseek-r1-distill-llama-70b'
@@ -45,11 +50,6 @@ export const PROVIDER_GROUPS = {
   'Google': [
     'google/gemini-2.5-pro', 'google/gemini-2.5-flash', 'google/gemini-2.5-flash-lite',
     'google/gemini-2.0-flash', 'google/gemini-2.0-flash-lite', 'google/gemma-2-9b'
-  ],
-  'Meta': [
-    'meta/llama-4-maverick', 'meta/llama-4-scout', 'meta/llama-3.3-70b',
-    'meta/llama-3.2-90b', 'meta/llama-3.2-11b', 'meta/llama-3.2-3b',
-    'meta/llama-3.1-70b', 'meta/llama-3.1-8b', 'meta/llama-3-70b', 'meta/llama-3-8b'
   ],
   'Mistral': [
     'mistral/magistral-medium', 'mistral/magistral-small', 'mistral/mistral-large', 'mistral/mistral-small',
@@ -76,5 +76,5 @@ export const PROVIDER_GROUPS = {
   ]
 };
 
-// Default gateway model - Let's use the latest DeepSeek R1! 🔥
-export const DEFAULT_GATEWAY_MODEL = "deepseek/deepseek-r1";
+// Default gateway model - Let's use the fastest Groq model! ⚡
+export const DEFAULT_GATEWAY_MODEL = "groq/llama-3.1-8b-instant";
