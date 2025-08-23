@@ -18,17 +18,21 @@ export const webSearch = tool({
       throw new Error('BRAVE_SEARCH_API_KEY environment variable is not set');
     }
 
-    // Build query parameters
-    const params = new URLSearchParams({
+    // Build query parameters - filter out undefined values
+    const paramsObj: Record<string, string> = {
       q: query,
-      count: count.toString(),
-      country,
-      search_lang,
-      safesearch,
+      count: (count ?? 10).toString(),
       result_filter: 'web', // Focus on web results
       text_decorations: 'true', // Include highlighting
       spellcheck: 'true', // Enable spellcheck
-    });
+    };
+
+    // Only add optional parameters if they're defined
+    if (country) paramsObj.country = country;
+    if (search_lang) paramsObj.search_lang = search_lang;
+    if (safesearch) paramsObj.safesearch = safesearch;
+
+    const params = new URLSearchParams(paramsObj);
 
     if (freshness) {
       params.append('freshness', freshness);

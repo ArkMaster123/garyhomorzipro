@@ -109,7 +109,7 @@ export function PersonaSelector({
                       <p>Perfect for general assistance, coding help, and everyday tasks.</p>
                     )}
                     {persona.id === 'gary-hormozi' && (
-                      <p>Combines Gary Vee's energy with Alex Hormozi's business strategy. Great for entrepreneurship, marketing, and scaling businesses.</p>
+                      <p>Combines Gary Vee&apos;s energy with Alex Hormozi&apos;s business strategy. Great for entrepreneurship, marketing, and scaling businesses.</p>
                     )}
                     {persona.id === 'rory-sutherland' && (
                       <p>Behavioral economics expert who challenges assumptions. Ideal for creative problem-solving and understanding human psychology.</p>
