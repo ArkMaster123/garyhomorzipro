@@ -2,7 +2,7 @@
 
 import { DefaultChatTransport } from 'ai';
 import { useChat } from '@ai-sdk/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import useSWR, { useSWRConfig } from 'swr';
 import { ChatHeader } from '@/components/chat-header';
 import type { Vote } from '@/lib/db/schema';
@@ -22,6 +22,7 @@ import { useAutoResume } from '@/hooks/use-auto-resume';
 import { ChatSDKError } from '@/lib/errors';
 import type { Attachment, ChatMessage } from '@/lib/types';
 import { useDataStream } from './data-stream-provider';
+import { DEFAULT_GATEWAY_MODEL } from '@/lib/ai/models';
 
 export function Chat({
   id,
@@ -49,6 +50,18 @@ export function Chat({
   const { setDataStream } = useDataStream();
 
   const [input, setInput] = useState<string>('');
+  
+  // Model state management
+  const [selectedModelId, setSelectedModelId] = useState<string>(() => {
+    // For legacy models, use as-is; for new chats, use default gateway model
+    return initialChatModel.includes('/') ? initialChatModel : DEFAULT_GATEWAY_MODEL;
+  });
+
+  const handleModelChange = useCallback((newModelId: string) => {
+    setSelectedModelId(newModelId);
+    // TODO: Save to localStorage or URL params for persistence
+    console.log('Model changed to:', newModelId);
+  }, []);
 
   const {
     messages,
@@ -71,8 +84,9 @@ export function Chat({
           body: {
             id,
             message: messages.at(-1),
-            selectedChatModel: initialChatModel,
+            selectedChatModel: initialChatModel, // Keep for legacy compatibility
             selectedVisibilityType: visibilityType,
+            modelId: selectedModelId, // Add dynamic model selection
             ...body,
           },
         };
@@ -131,10 +145,11 @@ export function Chat({
       <div className="flex flex-col min-w-0 h-dvh bg-background">
         <ChatHeader
           chatId={id}
-          selectedModelId={initialChatModel}
+          selectedModelId={selectedModelId}
           selectedVisibilityType={initialVisibilityType}
           isReadonly={isReadonly}
           session={session}
+          onModelChange={handleModelChange}
         />
 
         <Messages
