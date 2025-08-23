@@ -4,6 +4,7 @@ import {
   wrapLanguageModel,
 } from 'ai';
 import { gateway } from '@ai-sdk/gateway';
+import { gateway as gatewayProvider } from './gateway';
 import {
   artifactModel,
   chatModel,
@@ -11,7 +12,9 @@ import {
   titleModel,
 } from './models.test';
 import { isTestEnvironment } from '../constants';
+import { DEFAULT_GATEWAY_MODEL } from './models';
 
+// Create dynamic provider that can handle both internal models and gateway models
 export const myProvider = isTestEnvironment
   ? customProvider({
       languageModels: {
@@ -23,6 +26,7 @@ export const myProvider = isTestEnvironment
     })
   : customProvider({
       languageModels: {
+        // Legacy internal models
         'chat-model': gateway('xai/grok-2-vision-1212'),
         'chat-model-reasoning': wrapLanguageModel({
           model: gateway('xai/grok-3-mini-beta'),
@@ -32,3 +36,59 @@ export const myProvider = isTestEnvironment
         'artifact-model': gateway('xai/grok-2-1212'),
       },
     });
+
+// Models that support reasoning and should have reasoning middleware
+const REASONING_MODELS = [
+  // OpenAI reasoning models
+  'openai/o1',
+  'openai/o3',
+  'openai/o3-mini',
+  
+  // DeepSeek reasoning models
+  'deepseek/deepseek-r1',
+  'deepseek/deepseek-r1-distill-llama-70b',
+  
+  // Perplexity reasoning models
+  'perplexity/sonar-reasoning',
+  'perplexity/sonar-reasoning-pro',
+];
+
+// Dynamic model factory for gateway models with reasoning support
+export function createDynamicModel(modelId: string) {
+  // Handle legacy internal models
+  if (['chat-model', 'chat-model-reasoning', 'title-model', 'artifact-model'].includes(modelId)) {
+    return myProvider.languageModel(modelId);
+  }
+  
+  // Handle gateway models
+  if (modelId.includes('/')) {
+    const baseModel = gatewayProvider(modelId);
+    
+    // Check if this model supports reasoning
+    if (REASONING_MODELS.includes(modelId)) {
+      console.log(`🧠 Enabling reasoning for model: ${modelId}`);
+      return wrapLanguageModel({
+        model: baseModel,
+        middleware: extractReasoningMiddleware({ 
+          tagName: 'think' // Standard reasoning tag
+        }),
+      });
+    }
+    
+    return baseModel;
+  }
+  
+  // Fallback to default gateway model
+  console.warn(`Unknown model ID: ${modelId}, falling back to default`);
+  const fallbackModel = gatewayProvider(DEFAULT_GATEWAY_MODEL);
+  
+  // Also check if fallback model supports reasoning
+  if (REASONING_MODELS.includes(DEFAULT_GATEWAY_MODEL)) {
+    return wrapLanguageModel({
+      model: fallbackModel,
+      middleware: extractReasoningMiddleware({ tagName: 'think' }),
+    });
+  }
+  
+  return fallbackModel;
+}

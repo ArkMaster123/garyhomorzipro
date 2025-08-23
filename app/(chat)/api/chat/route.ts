@@ -24,7 +24,7 @@ import { updateDocument } from '@/lib/ai/tools/update-document';
 import { requestSuggestions } from '@/lib/ai/tools/request-suggestions';
 import { getWeather } from '@/lib/ai/tools/get-weather';
 import { isProductionEnvironment } from '@/lib/constants';
-import { myProvider } from '@/lib/ai/providers';
+import { myProvider, createDynamicModel } from '@/lib/ai/providers';
 import { entitlementsByUserType } from '@/lib/ai/entitlements';
 import { postRequestBodySchema, type PostRequestBody } from './schema';
 import { geolocation } from '@vercel/functions';
@@ -78,12 +78,17 @@ export async function POST(request: Request) {
       message,
       selectedChatModel,
       selectedVisibilityType,
+      modelId,
     }: {
       id: string;
       message: ChatMessage;
-      selectedChatModel: ChatModel['id'];
+      selectedChatModel: string;
       selectedVisibilityType: VisibilityType;
+      modelId?: string;
     } = requestBody;
+
+    // Use modelId if provided (for gateway models), otherwise use selectedChatModel (for legacy models)
+    const effectiveModelId = modelId || selectedChatModel;
 
     const session = await auth();
 
@@ -152,12 +157,12 @@ export async function POST(request: Request) {
     const stream = createUIMessageStream({
       execute: ({ writer: dataStream }) => {
         const result = streamText({
-          model: myProvider.languageModel(selectedChatModel),
-          system: systemPrompt({ selectedChatModel, requestHints }),
+          model: createDynamicModel(effectiveModelId),
+          system: systemPrompt({ selectedChatModel: effectiveModelId, requestHints }),
           messages: convertToModelMessages(uiMessages),
           stopWhen: stepCountIs(5),
           experimental_activeTools:
-            selectedChatModel === 'chat-model-reasoning'
+            effectiveModelId === 'chat-model-reasoning'
               ? []
               : [
                   'getWeather',
