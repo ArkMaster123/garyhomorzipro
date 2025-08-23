@@ -24,10 +24,11 @@ import { SuggestedActions } from './suggested-actions';
 import equal from 'fast-deep-equal';
 import type { UseChatHelpers } from '@ai-sdk/react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowDown } from 'lucide-react';
+import { ArrowDown, Info } from 'lucide-react';
 import { useScrollToBottom } from '@/hooks/use-scroll-to-bottom';
 import type { VisibilityType } from './visibility-selector';
 import type { Attachment, ChatMessage } from '@/lib/types';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 
 function PureMultimodalInput({
   chatId,
@@ -345,18 +346,55 @@ function PureAttachmentsButton({
   status: UseChatHelpers<ChatMessage>['status'];
 }) {
   return (
-    <Button
-      data-testid="attachments-button"
-      className="rounded-md rounded-bl-lg p-[7px] h-fit dark:border-zinc-700 hover:dark:bg-zinc-900 hover:bg-zinc-200"
-      onClick={(event) => {
-        event.preventDefault();
-        fileInputRef.current?.click();
-      }}
-      disabled={status !== 'ready'}
-      variant="ghost"
-    >
-      <PaperclipIcon size={14} />
-    </Button>
+    <div className="flex items-center gap-1">
+      <Button
+        data-testid="attachments-button"
+        className="rounded-md rounded-bl-lg p-[7px] h-fit dark:border-zinc-700 hover:dark:bg-zinc-900 hover:bg-zinc-200"
+        onClick={(event) => {
+          event.preventDefault();
+          fileInputRef.current?.click();
+        }}
+        disabled={status !== 'ready'}
+        variant="ghost"
+      >
+        <PaperclipIcon size={14} />
+      </Button>
+      
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0 rounded-full hover:bg-muted/50"
+              disabled={status !== 'ready'}
+            >
+              <Info size={12} className="text-muted-foreground" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent 
+            side="top" 
+            className="max-w-xs p-3 text-sm"
+            sideOffset={8}
+          >
+            <div className="space-y-2">
+              <p className="font-medium text-foreground">Supported File Formats</p>
+              <div className="space-y-1 text-muted-foreground">
+                <p>📄 <strong>Documents:</strong> PDF, DOC, TXT, MD</p>
+                <p>🖼️ <strong>Images:</strong> JPG, PNG, GIF, SVG, WEBP</p>
+                <p>💻 <strong>Code:</strong> JS, TS, PY, JAVA, CPP, HTML, CSS</p>
+                <p>📊 <strong>Data:</strong> CSV, JSON, XML</p>
+                <p>🎵 <strong>Audio:</strong> MP3, WAV, M4A</p>
+                <p>🎥 <strong>Video:</strong> MP4, MOV, AVI</p>
+              </div>
+              <p className="text-xs text-muted-foreground pt-1">
+                Max file size: 10MB per file
+              </p>
+            </div>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    </div>
   );
 }
 
