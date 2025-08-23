@@ -63,6 +63,32 @@ export async function createUser(email: string, password: string) {
   }
 }
 
+export async function getUserPersona(userId: string): Promise<string> {
+  try {
+    const result = await db
+      .select({ persona: user.persona })
+      .from(user)
+      .where(eq(user.id, userId))
+      .limit(1);
+    
+    return result[0]?.persona || 'default';
+  } catch (error) {
+    console.error('Failed to get user persona:', error);
+    return 'default';
+  }
+}
+
+export async function updateUserPersona(userId: string, persona: string) {
+  try {
+    return await db
+      .update(user)
+      .set({ persona })
+      .where(eq(user.id, userId));
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to update user persona');
+  }
+}
+
 export async function createGuestUser() {
   const email = `guest-${Date.now()}`;
   const password = generateHashedPassword(generateUUID());

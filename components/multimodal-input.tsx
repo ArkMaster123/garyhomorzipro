@@ -16,7 +16,7 @@ import {
 import { toast } from 'sonner';
 import { useLocalStorage, useWindowSize } from 'usehooks-ts';
 
-import { ArrowUpIcon, PaperclipIcon, StopIcon } from './icons';
+import { ArrowUpIcon, PaperclipIcon, StopIcon, SearchIcon } from './icons';
 import { PreviewAttachment } from './preview-attachment';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
@@ -108,9 +108,14 @@ function PureMultimodalInput({
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
+  const [isWebSearchMode, setIsWebSearchMode] = useState(false);
 
   const submitForm = useCallback(() => {
     window.history.replaceState({}, '', `/chat/${chatId}`);
+
+    const messageText = isWebSearchMode 
+      ? `Please search the web for: ${input}`
+      : input;
 
     sendMessage({
       role: 'user',
@@ -123,7 +128,7 @@ function PureMultimodalInput({
         })),
         {
           type: 'text',
-          text: input,
+          text: messageText,
         },
       ],
     });
@@ -132,6 +137,7 @@ function PureMultimodalInput({
     setLocalStorageInput('');
     resetHeight();
     setInput('');
+    setIsWebSearchMode(false);
 
     if (width && width > 768) {
       textareaRef.current?.focus();
@@ -145,6 +151,7 @@ function PureMultimodalInput({
     setLocalStorageInput,
     width,
     chatId,
+    isWebSearchMode,
   ]);
 
   const uploadFile = async (file: File) => {
@@ -280,7 +287,7 @@ function PureMultimodalInput({
       <Textarea
         data-testid="multimodal-input"
         ref={textareaRef}
-        placeholder="Send a message..."
+        placeholder={isWebSearchMode ? "Search the web..." : "Send a message..."}
         value={input}
         onChange={handleInput}
         className={cx(
@@ -307,7 +314,12 @@ function PureMultimodalInput({
       />
 
       <div className="absolute bottom-0 p-2 w-fit flex flex-row justify-start">
-        <AttachmentsButton fileInputRef={fileInputRef} status={status} />
+        <AttachmentsButton 
+          fileInputRef={fileInputRef} 
+          status={status} 
+          isWebSearchMode={isWebSearchMode}
+          setIsWebSearchMode={setIsWebSearchMode}
+        />
       </div>
 
       <div className="absolute bottom-0 right-0 p-2 w-fit flex flex-row justify-end">
@@ -341,23 +353,47 @@ export const MultimodalInput = memo(
 function PureAttachmentsButton({
   fileInputRef,
   status,
+  isWebSearchMode,
+  setIsWebSearchMode,
 }: {
   fileInputRef: React.MutableRefObject<HTMLInputElement | null>;
   status: UseChatHelpers<ChatMessage>['status'];
+  isWebSearchMode: boolean;
+  setIsWebSearchMode: (value: boolean) => void;
 }) {
   return (
     <div className="flex items-center gap-1">
       <Button
         data-testid="attachments-button"
-        className="rounded-md rounded-bl-lg p-[7px] h-fit dark:border-zinc-700 hover:dark:bg-zinc-900 hover:bg-zinc-200"
+        className={cx(
+          "rounded-md rounded-bl-lg p-[7px] h-fit dark:border-zinc-700 hover:dark:bg-zinc-900 hover:bg-zinc-200",
+          !isWebSearchMode && "bg-background"
+        )}
         onClick={(event) => {
           event.preventDefault();
           fileInputRef.current?.click();
+          setIsWebSearchMode(false);
         }}
         disabled={status !== 'ready'}
-        variant="ghost"
+        variant={!isWebSearchMode ? "ghost" : "outline"}
       >
         <PaperclipIcon size={14} />
+      </Button>
+
+      <Button
+        data-testid="web-search-button"
+        className={cx(
+          "rounded-md p-[7px] h-fit dark:border-zinc-700 hover:dark:bg-zinc-900 hover:bg-zinc-200",
+          isWebSearchMode && "bg-muted dark:bg-zinc-800"
+        )}
+        onClick={(event) => {
+          event.preventDefault();
+          setIsWebSearchMode(!isWebSearchMode);
+        }}
+        disabled={status !== 'ready'}
+        variant={isWebSearchMode ? "outline" : "ghost"}
+      >
+        <SearchIcon size={14} />
       </Button>
       
       <TooltipProvider>
@@ -378,17 +414,13 @@ function PureAttachmentsButton({
             sideOffset={8}
           >
             <div className="space-y-2">
-              <p className="font-medium text-foreground">Supported File Formats</p>
+              <p className="font-medium text-foreground">Available Tools</p>
               <div className="space-y-1 text-muted-foreground">
-                <p>📄 <strong>Documents:</strong> PDF, DOC, TXT, MD</p>
-                <p>🖼️ <strong>Images:</strong> JPG, PNG, GIF, SVG, WEBP</p>
-                <p>💻 <strong>Code:</strong> JS, TS, PY, JAVA, CPP, HTML, CSS</p>
-                <p>📊 <strong>Data:</strong> CSV, JSON, XML</p>
-                <p>🎵 <strong>Audio:</strong> MP3, WAV, M4A</p>
-                <p>🎥 <strong>Video:</strong> MP4, MOV, AVI</p>
+                <p>📎 <strong>File Upload:</strong> PDF, DOC, TXT, MD, Images, Code, etc.</p>
+                <p>🔍 <strong>Web Search:</strong> Search the web for current information</p>
               </div>
               <p className="text-xs text-muted-foreground pt-1">
-                Max file size: 10MB per file
+                Click the icons to switch between modes
               </p>
             </div>
           </TooltipContent>

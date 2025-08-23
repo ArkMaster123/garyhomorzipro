@@ -1,0 +1,1 @@
+ALTER TABLE "User" ADD COLUMN "persona" varchar(32) DEFAULT 'default';

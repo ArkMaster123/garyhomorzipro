@@ -8,7 +8,7 @@ function buildModelList(models: GatewayModel[]): DisplayModel[] {
   return models.map((model) => ({
     id: model.id,
     label: model.name,
-    provider: model.provider || model.id.split('/')[0],
+    provider: model.provider || model.specification?.provider || model.id.split('/')[0],
   }));
 }
 
