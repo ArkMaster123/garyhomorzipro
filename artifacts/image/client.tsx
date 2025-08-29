@@ -50,23 +50,39 @@ export const imageArtifact = new Artifact({
       icon: <CopyIcon size={18} />,
       description: 'Copy image to clipboard',
       onClick: ({ content }) => {
-        const img = new Image();
-        img.src = `data:image/png;base64,${content}`;
+        if (content.startsWith('data:')) {
+          // Handle base64 data
+          const img = new Image();
+          img.src = content;
 
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          canvas.width = img.width;
-          canvas.height = img.height;
-          const ctx = canvas.getContext('2d');
-          ctx?.drawImage(img, 0, 0);
-          canvas.toBlob((blob) => {
-            if (blob) {
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx?.drawImage(img, 0, 0);
+            canvas.toBlob((blob) => {
+              if (blob) {
+                navigator.clipboard.write([
+                  new ClipboardItem({ 'image/png': blob }),
+                ]);
+              }
+            }, 'image/png');
+          };
+        } else {
+          // Handle URL - fetch the image first
+          fetch(content)
+            .then(response => response.blob())
+            .then(blob => {
               navigator.clipboard.write([
                 new ClipboardItem({ 'image/png': blob }),
               ]);
-            }
-          }, 'image/png');
-        };
+            })
+            .catch(error => {
+              console.error('Failed to copy image from URL:', error);
+              toast.error('Failed to copy image');
+            });
+        }
 
         toast.success('Copied image to clipboard!');
       },

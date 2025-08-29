@@ -42,19 +42,101 @@ export function PureMessageActions({
               className="py-1 px-2 h-fit text-muted-foreground"
               variant="outline"
               onClick={async () => {
+                // Debug: Log the message structure
+                console.log('Message parts:', message.parts);
+                console.log('Message structure:', message);
+
+                // First try to get text content
                 const textFromParts = message.parts
                   ?.filter((part) => part.type === 'text')
                   .map((part) => part.text)
                   .join('\n')
                   .trim();
 
-                if (!textFromParts) {
-                  toast.error("There's no text to copy!");
+                // If there's text, copy it
+                if (textFromParts) {
+                  await copyToClipboard(textFromParts);
+                  toast.success('Text copied to clipboard!');
                   return;
                 }
 
-                await copyToClipboard(textFromParts);
-                toast.success('Copied to clipboard!');
+                // Check for tool-generateImage parts (image generation)
+                const imageParts = message.parts?.filter((part) => part.type === 'tool-generateImage');
+                console.log('Image parts:', imageParts);
+                
+                if (imageParts && imageParts.length > 0) {
+                  for (const imagePart of imageParts) {
+                    console.log('Image part details:', imagePart);
+                    console.log('Image part input:', imagePart.input);
+                    console.log('Image part output:', imagePart.output);
+                    
+                    // Try multiple possible locations for the prompt
+                    let prompt = null;
+                    
+                    // Check input first
+                    if (imagePart.input?.text_prompt) {
+                      prompt = imagePart.input.text_prompt;
+                    }
+                    // Check output if input doesn't have it
+                    else if (imagePart.output?.text_prompt) {
+                      prompt = imagePart.output.text_prompt;
+                    }
+                    // Check if there's any text in the input
+                    else if (imagePart.input && typeof imagePart.input === 'object') {
+                      // Look for any string values that might be the prompt
+                      const inputValues = Object.values(imagePart.input);
+                      const textValue = inputValues.find(val => typeof val === 'string' && val.length > 0);
+                      if (textValue) {
+                        prompt = textValue;
+                      }
+                    }
+                    // Check if there's any text in the output
+                    else if (imagePart.output && typeof imagePart.output === 'object') {
+                      const outputValues = Object.values(imagePart.output);
+                      const textValue = outputValues.find(val => typeof val === 'string' && val.length > 0);
+                      if (textValue) {
+                        prompt = textValue;
+                      }
+                    }
+                    
+                    console.log('Found prompt:', prompt);
+                    
+                    if (prompt) {
+                      // Copy the image prompt
+                      await copyToClipboard(prompt);
+                      toast.success('Image prompt copied to clipboard!');
+                      return;
+                    }
+                  }
+                }
+
+                // Check for other tool call types
+                const toolCallParts = message.parts?.filter((part) => part.type === 'tool-call');
+                console.log('Tool call parts:', toolCallParts);
+                
+                if (toolCallParts && toolCallParts.length > 0) {
+                  // Look for other tool results
+                  for (const toolCall of toolCallParts) {
+                    console.log('Tool call:', toolCall);
+                    if (toolCall.toolName === 'generateImage' && toolCall.result?.output?.success) {
+                      const imageOutput = toolCall.result.output;
+                      const prompt = imageOutput.text_prompt || 'Generated image';
+                      
+                      // Copy the image prompt
+                      await copyToClipboard(prompt);
+                      toast.success('Image prompt copied to clipboard!');
+                      return;
+                    }
+                  }
+                  
+                  // If no specific tool found, copy a generic message
+                  await copyToClipboard('Generated content (image, document, etc.)');
+                  toast.success('Content description copied to clipboard!');
+                  return;
+                }
+
+                // If still nothing, show error
+                toast.error("There's no content to copy!");
               }}
             >
               <CopyIcon />

@@ -9,6 +9,7 @@ import { PersonaSelector } from '@/components/persona-selector';
 import { SidebarToggle } from '@/components/sidebar-toggle';
 import { Button } from '@/components/ui/button';
 import { PlusIcon, ShareIcon } from './icons';
+import { Volume2, VolumeX } from 'lucide-react';
 import { useSidebar } from './ui/sidebar';
 import { memo, useState, useEffect } from 'react';
 import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
@@ -16,6 +17,7 @@ import { type VisibilityType, VisibilitySelector } from './visibility-selector';
 import type { Session } from 'next-auth';
 import { toast } from './toast';
 import type { PersonaType } from '@/lib/ai/personas';
+import { useVoice } from '@/hooks/use-voice';
 
 function PureChatHeader({
   chatId,
@@ -35,6 +37,7 @@ function PureChatHeader({
   const router = useRouter();
   const { open } = useSidebar();
   const [currentPersona, setCurrentPersona] = useState<PersonaType>('default');
+  const { isVoiceEnabled, toggleVoice } = useVoice();
 
   const { width: windowWidth } = useWindowSize();
 
@@ -132,6 +135,28 @@ function PureChatHeader({
           onPersonaChange={handlePersonaChange}
           disabled={false}
         />
+      )}
+
+      {/* Voice Toggle Button */}
+      {!isReadonly && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 px-2 order-1 md:order-3"
+              onClick={toggleVoice}
+            >
+              {isVoiceEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />}
+              <span className="ml-1.5 hidden md:inline">
+                {isVoiceEnabled ? 'Voice On' : 'Voice Off'}
+              </span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{isVoiceEnabled ? 'Disable voice responses' : 'Enable voice responses'}</p>
+          </TooltipContent>
+        </Tooltip>
       )}
 
       {!isReadonly && (

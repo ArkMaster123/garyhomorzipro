@@ -49,7 +49,7 @@ export const PROVIDER_GROUPS = {
   ],
   'Google': [
     'google/gemini-2.5-pro', 'google/gemini-2.5-flash', 'google/gemini-2.5-flash-lite',
-    'google/gemini-2.0-flash', 'google/gemini-2.0-flash-lite', 'google/gemma-2-9b'
+    'google/gemini-2.5-flash-image-preview', 'google/gemini-2.0-flash', 'google/gemini-2.0-flash-lite', 'google/gemma-2-9b'
   ],
   'Mistral': [
     'mistral/magistral-medium', 'mistral/magistral-small', 'mistral/mistral-large', 'mistral/mistral-small',
@@ -78,3 +78,23 @@ export const PROVIDER_GROUPS = {
 
 // Default gateway model - Let's use the fastest Groq model! ⚡
 export const DEFAULT_GATEWAY_MODEL = "groq/llama-3.1-8b-instant";
+
+// Image generation models configuration
+export const IMAGE_GENERATION_MODELS = {
+  'google/gemini-2.5-flash-image-preview': {
+    id: 'google/gemini-2.5-flash-image-preview',
+    name: 'Gemini 2.5 Flash (Image Preview)',
+    provider: 'google',
+    capabilities: ['text', 'image-generation'],
+    maxTokens: 1000000,
+    supportsImageGeneration: true,
+  },
+  'google/gemini-2.0-flash-exp': {
+    id: 'google/gemini-2.0-flash-exp',
+    name: 'Gemini 2.0 Flash (Experimental)',
+    provider: 'google',
+    capabilities: ['text', 'image-generation'],
+    maxTokens: 1000000,
+    supportsImageGeneration: true,
+  },
+} as const;

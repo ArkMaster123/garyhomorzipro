@@ -24,8 +24,9 @@ import { SuggestedActions } from './suggested-actions';
 import equal from 'fast-deep-equal';
 import type { UseChatHelpers } from '@ai-sdk/react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowDown, Info } from 'lucide-react';
+import { ArrowDown, Info, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
 import { useScrollToBottom } from '@/hooks/use-scroll-to-bottom';
+import { useVoice } from '@/hooks/use-voice';
 import type { VisibilityType } from './visibility-selector';
 import type { Attachment, ChatMessage } from '@/lib/types';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
@@ -109,6 +110,21 @@ function PureMultimodalInput({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
   const [isWebSearchMode, setIsWebSearchMode] = useState(false);
+  
+  // Voice functionality using custom hook
+  const {
+    isListening,
+    isVoiceEnabled,
+    isSpeaking,
+    toggleVoice,
+    startListening,
+    stopListening,
+    speakText,
+  } = useVoice();
+
+  const handleVoiceTranscript = (transcript: string) => {
+    setInput(transcript);
+  };
 
   const submitForm = useCallback(() => {
     window.history.replaceState({}, '', `/chat/${chatId}`);
@@ -319,6 +335,11 @@ function PureMultimodalInput({
           status={status} 
           isWebSearchMode={isWebSearchMode}
           setIsWebSearchMode={setIsWebSearchMode}
+          isListening={isListening}
+          startListening={() => startListening(handleVoiceTranscript)}
+          stopListening={stopListening}
+          isVoiceEnabled={isVoiceEnabled}
+          toggleVoice={toggleVoice}
         />
       </div>
 
@@ -355,11 +376,21 @@ function PureAttachmentsButton({
   status,
   isWebSearchMode,
   setIsWebSearchMode,
+  isListening,
+  startListening,
+  stopListening,
+  isVoiceEnabled,
+  toggleVoice,
 }: {
   fileInputRef: React.MutableRefObject<HTMLInputElement | null>;
   status: UseChatHelpers<ChatMessage>['status'];
   isWebSearchMode: boolean;
   setIsWebSearchMode: (value: boolean) => void;
+  isListening: boolean;
+  startListening: () => void;
+  stopListening: () => void;
+  isVoiceEnabled: boolean;
+  toggleVoice: () => void;
 }) {
   return (
     <div className="flex items-center gap-1">
@@ -395,6 +426,46 @@ function PureAttachmentsButton({
       >
         <SearchIcon size={14} />
       </Button>
+
+      {/* Voice Toggle Button */}
+      <Button
+        data-testid="voice-toggle-button"
+        className={cx(
+          "rounded-md p-[7px] h-fit dark:border-zinc-700 hover:dark:bg-zinc-900 hover:bg-zinc-200",
+          isVoiceEnabled && "bg-muted dark:bg-zinc-800"
+        )}
+        onClick={(event) => {
+          event.preventDefault();
+          toggleVoice();
+        }}
+        disabled={status !== 'ready'}
+        variant={isVoiceEnabled ? "outline" : "ghost"}
+      >
+        {isVoiceEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />}
+      </Button>
+
+      {/* Microphone Button */}
+      {isVoiceEnabled && (
+        <Button
+          data-testid="microphone-button"
+          className={cx(
+            "rounded-md p-[7px] h-fit dark:border-zinc-700 hover:dark:bg-zinc-900 hover:bg-zinc-200",
+            isListening && "bg-red-500 text-white hover:bg-red-600"
+          )}
+          onClick={(event) => {
+            event.preventDefault();
+            if (isListening) {
+              stopListening();
+            } else {
+              startListening();
+            }
+          }}
+          disabled={status !== 'ready'}
+          variant={isListening ? "outline" : "ghost"}
+        >
+          {isListening ? <MicOff size={14} /> : <Mic size={14} />}
+        </Button>
+      )}
       
       <TooltipProvider>
         <Tooltip>
@@ -418,6 +489,8 @@ function PureAttachmentsButton({
               <div className="space-y-1 text-muted-foreground">
                 <p>📎 <strong>File Upload:</strong> PDF, DOC, TXT, MD, Images, Code, etc.</p>
                 <p>🔍 <strong>Web Search:</strong> Search the web for current information</p>
+                <p>🎤 <strong>Voice Input:</strong> Speak your message instead of typing</p>
+                <p>🔊 <strong>Voice Response:</strong> Hear Gary's responses spoken aloud</p>
               </div>
               <p className="text-xs text-muted-foreground pt-1">
                 Click the icons to switch between modes
