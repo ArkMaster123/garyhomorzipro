@@ -25,6 +25,7 @@ import { updateDocument } from '@/lib/ai/tools/update-document';
 import { requestSuggestions } from '@/lib/ai/tools/request-suggestions';
 import { getWeather } from '@/lib/ai/tools/get-weather';
 import { webSearch } from '@/lib/ai/tools/web-search';
+import { generateImage } from '@/lib/ai/tools/generate-image';
 import { isProductionEnvironment } from '@/lib/constants';
 import { myProvider, createDynamicModel } from '@/lib/ai/providers';
 import { entitlementsByUserType } from '@/lib/ai/entitlements';
@@ -181,6 +182,7 @@ export async function POST(request: Request) {
                   'createDocument',
                   'updateDocument',
                   'requestSuggestions',
+                  'generateImage',
                 ],
           experimental_transform: smoothStream({ chunking: 'word' }),
           tools: {
@@ -192,6 +194,7 @@ export async function POST(request: Request) {
               session,
               dataStream,
             }),
+            generateImage,
           },
           providerOptions: {
             gateway: {

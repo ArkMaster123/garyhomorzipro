@@ -6,6 +6,7 @@ import equal from 'fast-deep-equal';
 import type { UseChatHelpers } from '@ai-sdk/react';
 import { motion } from 'framer-motion';
 import { useMessages } from '@/hooks/use-messages';
+import { useVoiceResponse } from '@/hooks/use-voice-response';
 import type { ChatMessage } from '@/lib/types';
 import { useDataStream } from './data-stream-provider';
 
@@ -41,6 +42,9 @@ function PureMessages({
   });
 
   useDataStream();
+
+  // Enable automatic voice responses for assistant messages
+  useVoiceResponse(messages);
 
   return (
     <div
