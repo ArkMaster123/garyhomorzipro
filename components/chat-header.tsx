@@ -31,7 +31,7 @@ function PureChatHeader({
   selectedModelId: string;
   selectedVisibilityType: VisibilityType;
   isReadonly: boolean;
-  session: Session;
+  session?: Session | null;
   onModelChange?: (modelId: string) => void;
 }) {
   const router = useRouter();
