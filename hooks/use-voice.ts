@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { toast } from '@/components/toast';
-import type { SpeechRecognition } from '@/lib/types';
+import { toast } from 'sonner';
+import type { SpeechRecognition, SpeechRecognitionEvent, SpeechRecognitionErrorEvent } from '@/lib/types';
 
 export function useVoice() {
   const [isListening, setIsListening] = useState(false);
@@ -17,14 +17,14 @@ export function useVoice() {
       recognitionInstance.interimResults = false;
       recognitionInstance.lang = 'en-US';
       
-      recognitionInstance.onresult = (event) => {
+      recognitionInstance.onresult = (event: SpeechRecognitionEvent) => {
         const transcript = event.results[0][0].transcript;
         setIsListening(false);
         // Return the transcript to be handled by the parent component
         return transcript;
       };
       
-      recognitionInstance.onerror = (event) => {
+      recognitionInstance.onerror = (event: SpeechRecognitionErrorEvent) => {
         console.error('Speech recognition error:', event.error);
         setIsListening(false);
         toast.error('Speech recognition failed. Please try again.');

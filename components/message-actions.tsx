@@ -68,21 +68,21 @@ export function PureMessageActions({
                   for (const imagePart of imageParts) {
                     console.log('Image part details:', imagePart);
                     console.log('Image part input:', imagePart.input);
-                    console.log('Image part output:', imagePart.output);
+                    // console.log('Image part output:', imagePart.output); // Removed - output may not exist
                     
                     // Try multiple possible locations for the prompt
                     let prompt = null;
                     
-                    // Check input first
-                    if (imagePart.input?.text_prompt) {
-                      prompt = imagePart.input.text_prompt;
+                    // Check input first - use type guard to ensure input exists and has text_prompt
+                    if ('input' in imagePart && imagePart.input && typeof imagePart.input === 'object' && 'text_prompt' in imagePart.input) {
+                      prompt = (imagePart.input as any).text_prompt;
                     }
                     // Check output if input doesn't have it
-                    else if (imagePart.output?.text_prompt) {
-                      prompt = imagePart.output.text_prompt;
+                    else if ('output' in imagePart && imagePart.output && typeof imagePart.output === 'object' && 'text_prompt' in imagePart.output) {
+                      prompt = (imagePart.output as any).text_prompt;
                     }
                     // Check if there's any text in the input
-                    else if (imagePart.input && typeof imagePart.input === 'object') {
+                    else if ('input' in imagePart && imagePart.input && typeof imagePart.input === 'object') {
                       // Look for any string values that might be the prompt
                       const inputValues = Object.values(imagePart.input);
                       const textValue = inputValues.find(val => typeof val === 'string' && val.length > 0);
@@ -91,7 +91,7 @@ export function PureMessageActions({
                       }
                     }
                     // Check if there's any text in the output
-                    else if (imagePart.output && typeof imagePart.output === 'object') {
+                    else if ('output' in imagePart && imagePart.output && typeof imagePart.output === 'object') {
                       const outputValues = Object.values(imagePart.output);
                       const textValue = outputValues.find(val => typeof val === 'string' && val.length > 0);
                       if (textValue) {
@@ -110,16 +110,20 @@ export function PureMessageActions({
                   }
                 }
 
-                // Check for other tool call types
-                const toolCallParts = message.parts?.filter((part) => part.type === 'tool-call');
+                // Check for other tool call types - use a more generic approach
+                const toolCallParts = message.parts?.filter((part) => 
+                  'toolName' in part || 'result' in part
+                );
                 console.log('Tool call parts:', toolCallParts);
                 
                 if (toolCallParts && toolCallParts.length > 0) {
                   // Look for other tool results
                   for (const toolCall of toolCallParts) {
                     console.log('Tool call:', toolCall);
-                    if (toolCall.toolName === 'generateImage' && toolCall.result?.output?.success) {
-                      const imageOutput = toolCall.result.output;
+                    if ('toolName' in toolCall && 'result' in toolCall && 
+                        (toolCall as any).toolName === 'generateImage' && 
+                        (toolCall as any).result?.output?.success) {
+                      const imageOutput = (toolCall as any).result.output;
                       const prompt = imageOutput.text_prompt || 'Generated image';
                       
                       // Copy the image prompt

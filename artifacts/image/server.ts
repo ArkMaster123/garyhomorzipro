@@ -6,7 +6,7 @@ export const imageDocumentHandler = createDocumentHandler<'image'>({
   onCreateDocument: async ({ title, dataStream }) => {
     try {
       // Generate image using the direct Gemini tool
-      const result = await generateImage.execute({ text_prompt: title });
+      const result = await generateImage.execute({ text_prompt: title, limit: 1 });
       
       if (!result.success) {
         throw new Error(result.error || 'Failed to generate image');
@@ -47,7 +47,7 @@ export const imageDocumentHandler = createDocumentHandler<'image'>({
   onUpdateDocument: async ({ description, dataStream }) => {
     try {
       // Generate new image based on description using direct tool
-      const result = await generateImage.execute({ text_prompt: description });
+      const result = await generateImage.execute({ text_prompt: description, limit: 1 });
       
       if (!result.success) {
         throw new Error(result.error || 'Failed to generate image');

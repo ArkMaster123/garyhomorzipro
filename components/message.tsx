@@ -342,8 +342,8 @@ const PurePreviewMessage = ({
                         <div className="animate-spin">
                           <SparklesIcon size={16} />
                         </div>
-                        Generating image: &quot;{input.text_prompt}&quot;
-                        {input.style && ` (Style: ${input.style})`}
+                        Generating image: &quot;{(input as any).text_prompt}&quot;
+                        {(input as any).style && ` (Style: ${(input as any).style})`}
                       </div>
                     </div>
                   );
@@ -456,7 +456,9 @@ const PurePreviewMessage = ({
                                       htmlFor="image-upload"
                                       className="cursor-pointer flex flex-col items-center gap-2"
                                     >
-                                      <PaperclipIcon size={20} className="text-muted-foreground" />
+                                      <div className="text-muted-foreground">
+                                        <PaperclipIcon size={20} />
+                                      </div>
                                       <span className="text-sm text-muted-foreground">
                                         Click to upload an image or drag and drop
                                       </span>
@@ -533,7 +535,7 @@ const PurePreviewMessage = ({
                                                 const { url, pathname, contentType } = data;
 
                                                 // Add the uploaded file reference to the message
-                                                messageParts.push({
+                                                (messageParts as any).push({
                                                   type: 'file' as const,
                                                   url,
                                                   name: pathname,

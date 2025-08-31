@@ -490,7 +490,7 @@ function PureAttachmentsButton({
                 <p>📎 <strong>File Upload:</strong> PDF, DOC, TXT, MD, Images, Code, etc.</p>
                 <p>🔍 <strong>Web Search:</strong> Search the web for current information</p>
                 <p>🎤 <strong>Voice Input:</strong> Speak your message instead of typing</p>
-                <p>🔊 <strong>Voice Response:</strong> Hear Gary's responses spoken aloud</p>
+                <p>🔊 <strong>Voice Response:</strong> Hear Gary&apos;s responses spoken aloud</p>
               </div>
               <p className="text-xs text-muted-foreground pt-1">
                 Click the icons to switch between modes
