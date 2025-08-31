@@ -40,6 +40,8 @@ export const generateImage = {
   execute: async (input: GenerateImageInput) => {
     try {
       const { text_prompt, style, limit = 1 } = input;
+      // ALWAYS enforce single image generation unless explicitly requested otherwise
+      const enforcedLimit = limit === 1 ? 1 : Math.min(limit, 4);
       const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
       if (!apiKey) {
         throw new Error('GOOGLE_GENERATIVE_AI_API_KEY environment variable is not set');
@@ -48,8 +50,8 @@ export const generateImage = {
       const genAI = new GoogleGenerativeAI(apiKey);
       
       const fullPrompt = style 
-        ? `Create a picture of: ${text_prompt}. Style: ${style}`
-        : `Create a picture of: ${text_prompt}`;
+        ? `Create exactly ONE picture of: ${text_prompt}. Style: ${style}. Generate only a single image.`
+        : `Create exactly ONE picture of: ${text_prompt}. Generate only a single image.`;
 
       console.log('Full prompt:', fullPrompt);
       
@@ -81,12 +83,20 @@ export const generateImage = {
       console.log('Filtered image parts:', imageParts);
       
       if (!imageParts || imageParts.length === 0) {
+        // Check if this might be a safety filter issue
+        const responseText = response.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        if (responseText.toLowerCase().includes('safety') || 
+            responseText.toLowerCase().includes('policy') || 
+            responseText.toLowerCase().includes('violation') ||
+            responseText.toLowerCase().includes('inappropriate')) {
+          throw new Error('Image generation blocked by Google safety filters. Please adjust your prompt and try again.');
+        }
         throw new Error('No image was generated');
       }
 
       // Convert to our expected format and limit the number of images
       const images = await Promise.all(imageParts
-        .slice(0, limit) // Only take the first 'limit' images
+        .slice(0, enforcedLimit) // Only take the first 'enforcedLimit' images
         .map(async part => {
           const mimeType = part.inlineData?.mimeType || 'image/png';
           const base64 = part.inlineData?.data || '';
@@ -103,6 +113,11 @@ export const generateImage = {
       // Log the size of the response to help debug payload issues
       const totalSize = images.reduce((sum, img) => sum + img.size, 0);
       console.log(`Generated ${images.length} images, total size: ${(totalSize / 1024 / 1024).toFixed(2)} MB`);
+      
+      // If we got more than 1 image when limit was 1, log a warning
+      if (enforcedLimit === 1 && images.length > 1) {
+        console.warn('Warning: Gemini generated multiple images despite requesting only 1. This may indicate safety filter issues.');
+      }
       
       if (totalSize > 10 * 1024 * 1024) { // 10MB limit
         console.warn('Warning: Generated images exceed 10MB, may cause payload issues');

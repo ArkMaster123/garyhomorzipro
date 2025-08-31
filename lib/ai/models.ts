@@ -76,8 +76,8 @@ export const PROVIDER_GROUPS = {
   ]
 };
 
-// Default gateway model - Let's use the fastest Groq model! ⚡
-export const DEFAULT_GATEWAY_MODEL = "groq/llama-3.1-8b-instant";
+// Default gateway model - Using Cerebras GPT-OSS-120B for excellent function calling and generalist capabilities! 🚀
+export const DEFAULT_GATEWAY_MODEL = "cerebras/gpt-oss-120b";
 
 // Image generation models configuration
 export const IMAGE_GENERATION_MODELS = {
