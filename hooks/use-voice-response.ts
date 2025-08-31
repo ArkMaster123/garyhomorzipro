@@ -15,10 +15,11 @@ export function useVoiceResponse(messages: ChatMessage[]) {
     if (
       lastMessage.role === 'assistant' && 
       lastMessage.id !== lastSpokenMessageId.current &&
-      lastMessage.content
+      lastMessage.parts && lastMessage.parts.length > 0
     ) {
-      // Extract text content from the message
-      const textContent = lastMessage.content;
+      // Extract text content from the message parts
+      const textParts = lastMessage.parts.filter(part => part.type === 'text');
+      const textContent = textParts.map(part => (part as any).text).join(' ');
       
       if (textContent && textContent.trim()) {
         // Speak the message content
