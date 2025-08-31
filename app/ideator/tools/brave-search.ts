@@ -27,7 +27,7 @@ export async function brave_search(query: string, prioritizeStatista: boolean = 
     const response = await fetch(
       `https://api.search.brave.com/res/v1/web/search?q=${encodeURIComponent(searchQueries)}`,
       {
-        headers: { 'X-Subscription-Token': process.env.BRAVE_API_KEY || '' }
+        headers: { 'X-Subscription-Token': process.env.BRAVE_SEARCH_API_KEY || '' }
       }
     );
 

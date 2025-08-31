@@ -1,7 +1,6 @@
 'use server'
 
 // Third-party imports
-import Groq from "groq-sdk"
 import { z } from 'zod'
 
 const IdeaValidationSchema = z.object({
@@ -82,60 +81,32 @@ function redactSensitiveData(data: any) {
   return redactedData;
 }
 
-const BRAVE_API_KEY = process.env.BRAVE_API_KEY;
-const MAKE_COM_WEBHOOK_URL = process.env.MAKE_COM_WEBHOOK_URL;
+const BRAVE_API_KEY = process.env.BRAVE_SEARCH_API_KEY;
+const AI_GATEWAY_BASE_URL = process.env.AI_GATEWAY_BASE_URL;
+const AI_GATEWAY_API_KEY = process.env.AI_GATEWAY_API_KEY;
 
 import { braveSearchTool, brave_search } from './tools/brave-search';
-
-async function sendWebhook(email: string, data: any) {
-  console.log('=== Starting Webhook Send Process ===');
-  try {
-    if (!MAKE_COM_WEBHOOK_URL) {
-      console.error('Webhook URL is not configured');
-      throw new Error('Webhook URL missing');
-    }
-
-    console.log('Sending webhook request...');
-    const response = await fetch(MAKE_COM_WEBHOOK_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        email,
-        data: JSON.stringify(data),
-        timestamp: new Date().toISOString()
-      })
-    });
-    
-    if (!response.ok) {
-      console.error('Webhook response not OK:', response.status, response.statusText);
-      throw new Error(`Failed to send webhook: ${response.status}`);
-    }
-
-    console.log('Webhook sent successfully');
-    return true;
-  } catch (error) {
-    console.error('Error in sendWebhook:', error);
-    throw error;
-  }
-}
 
 async function getMarketResearch(title: string, description: string) {
   console.log('=== Starting Market Research Analysis ===');
   
-  if (!process.env.GROQ_API_KEY) {
-    throw new Error('API configuration missing');
+  if (!AI_GATEWAY_API_KEY) {
+    throw new Error('AI Gateway API key missing');
   }
 
-  const groq = new Groq({
-    apiKey: process.env.GROQ_API_KEY
-  });
-
-  // Use Groq with function calling for market research
-  const marketResearchCompletion = await groq.chat.completions.create({
-    messages: [
-      {
-        role: "system",
-        content: `You are a market research analyst. Your task is to search for and analyze market data for the business idea provided. Use the brave_search function to find relevant market statistics and data.
+  // Use AI Gateway for market research
+  const marketResearchResponse = await fetch(`${AI_GATEWAY_BASE_URL}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${AI_GATEWAY_API_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      model: "openai/gpt-oss-120b",
+      messages: [
+        {
+          role: "system",
+          content: `You are a market research analyst. Your task is to search for and analyze market data for the business idea provided. Use the brave_search function to find relevant market statistics and data.
 
 Search Strategy:
 1. First attempt: Search for 2024 market data from Statista (highest priority)
@@ -150,24 +121,29 @@ Remember to:
 - Note if data is from a broader or related market category
 - Include growth projections when available
 - Search multiple variations of market terms (e.g., "industry size", "market value", "market forecast")`
-      },
-      {
-        role: "user",
-        content: `Find market research data for this business idea:
-        Title: ${title}
-        Description: ${description}
-        
-        Search for relevant market size, growth rates, and competition data.`
-      }
-    ],
-    model: "llama-3.3-70b-versatile",
-    tools: [braveSearchTool],
-    tool_choice: "auto",
-    max_tokens: 1000,
-    temperature: 0.1
+        },
+        {
+          role: "user",
+          content: `Find market research data for this business idea:
+          Title: ${title}
+          Description: ${description}
+          
+          Search for relevant market size, growth rates, and competition data.`
+        }
+      ],
+      tools: [braveSearchTool],
+      tool_choice: "auto",
+      max_tokens: 1000,
+      temperature: 0.1
+    })
   });
 
-  const responseMessage = marketResearchCompletion.choices[0]?.message;
+  if (!marketResearchResponse.ok) {
+    throw new Error(`AI Gateway request failed: ${marketResearchResponse.status}`);
+  }
+
+  const marketResearchData = await marketResearchResponse.json();
+  const responseMessage = marketResearchData.choices[0]?.message;
   const toolCalls = responseMessage?.tool_calls || [];
   
   // Process tool calls and collect research
@@ -185,51 +161,63 @@ Remember to:
 
   const limitedResearch = searchResults.slice(0, 3);
 
-  // Now let the LLM analyze this data specifically for market figures
-  const marketDataCompletion = await groq.chat.completions.create({
-    messages: [
-      {
-        role: "system",
-        content: `You are a market research analyst. Your task is to analyze the provided market research data and extract specific figures.
-        IMPORTANT: 
-        1. Only use data from the provided sources
-        2. For missing specific data, use the closest relevant category
-        3. Always indicate the source of each figure
-        4. If no relevant data exists, respond with "Data not available"
-        5. Do not make up or estimate figures without source data`
-      },
-      {
-        role: "user",
-        content: `Analyze this market research for ${title}:
-        Sources: ${JSON.stringify(limitedResearch)}
-        
-        Return ONLY a JSON object in this format:
+  // Now let the AI analyze this data specifically for market figures
+  const marketDataResponse = await fetch(`${AI_GATEWAY_BASE_URL}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${AI_GATEWAY_API_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      model: "openai/gpt-oss-120b",
+      messages: [
         {
-          "marketSize": {
-            "value": "Format as $XXB or $XXM",
-            "category": "Specific market segment name",
-            "source": "URL of source"
-          },
-          "growth": {
-            "value": "X.X% (include % symbol)",
-            "detail": "Growth period and context",
-            "source": "URL of source"
-          },
-          "competition": {
-            "value": "Numeric competitor count",
-            "detail": "Competitive landscape summary",
-            "source": "URL of source"
-          }
-        }`
-      }
-    ],
-    model: "llama-3.3-70b-versatile",
-    temperature: 0.1,
-    max_tokens: 1000,
-    response_format: { type: "json_object" }
+          role: "system",
+          content: `You are a market research analyst. Your task is to analyze the provided market research data and extract specific figures.
+          IMPORTANT: 
+          1. Only use data from the provided sources
+          2. For missing specific data, use the closest relevant category
+          3. Always indicate the source of each figure
+          4. If no relevant data exists, respond with "Data not available"
+          5. Do not make up or estimate figures without source data`
+        },
+        {
+          role: "user",
+          content: `Analyze this market research for ${title}:
+          Sources: ${JSON.stringify(limitedResearch)}
+          
+          Return ONLY a JSON object in this format:
+          {
+            "marketSize": {
+              "value": "Format as $XXB or $XXM",
+              "category": "Specific market segment name",
+              "source": "URL of source"
+            },
+            "growth": {
+              "value": "X.X% (include % symbol)",
+              "detail": "Growth period and context",
+              "source": "URL of source"
+            },
+            "competition": {
+              "value": "Numeric competitor count",
+              "detail": "Competitive landscape summary",
+              "source": "URL of source"
+            }
+          }`
+        }
+      ],
+      temperature: 0.1,
+      max_tokens: 1000,
+      response_format: { type: "json_object" }
+    })
   });
 
-  const marketData = JSON.parse(marketDataCompletion.choices[0]?.message?.content || "{}");
+  if (!marketDataResponse.ok) {
+    throw new Error(`AI Gateway market data request failed: ${marketDataResponse.status}`);
+  }
+
+  const marketDataResult = await marketDataResponse.json();
+  const marketData = JSON.parse(marketDataResult.choices[0]?.message?.content || "{}");
   return { marketData, sources: limitedResearch };
 }
 
@@ -248,17 +236,13 @@ export async function validateIdea(
   console.log(`Description: ${description}`);
 
   try {
-    console.log('Checking Groq API key...');
-    if (!process.env.GROQ_API_KEY) {
-      console.error('GROQ_API_KEY is not configured');
-      throw new Error('API configuration missing');
+    console.log('Checking AI Gateway configuration...');
+    if (!AI_GATEWAY_API_KEY || !AI_GATEWAY_BASE_URL) {
+      console.error('AI Gateway configuration is missing');
+      throw new Error('AI Gateway configuration missing');
     }
 
-    console.log('Initializing Groq client...');
-    const groq = new Groq({
-      apiKey: process.env.GROQ_API_KEY
-    });
-    console.log('Groq client initialized successfully');
+    console.log('AI Gateway configuration verified');
 
     // Get market research data for advanced pathway
     let marketData = null;
@@ -276,95 +260,107 @@ export async function validateIdea(
       }
     }
 
-    console.log('Preparing API request...');
-    const completion = await groq.chat.completions.create({
-      messages: [
-        {
-          role: "system",
-          content: `You are Gary Hormozi, a successful entrepreneur and business advisor. Analyze business ideas and provide structured feedback in JSON format. ${
-            pathway === 'advanced'
-              ? `Use the provided market research data: ${JSON.stringify(marketData)}. Focus on providing creative insights for categories, validation, unfair advantages, challenges, and victory blueprint. The market figures have already been validated.`
-              : 'Provide a basic analysis with redacted market stats for free tier users.'
-          }`
-        },
-        {
-          role: "user",
-          content: `Analyze this business idea:
-          Title: ${title}
-          Description: ${description}
-
-          Provide a response in this exact JSON format:
+    console.log('Preparing AI Gateway request...');
+    const completionResponse = await fetch(`${AI_GATEWAY_BASE_URL}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${AI_GATEWAY_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        messages: [
           {
-            "title": "Refined, marketable business name (max 60 chars)",
-            "description": "Polished elevator pitch (max 200 chars)",
-            "categories": ["Primary Category", "Secondary Category"],
-            "marketSize": {
-              "value": "Format as $XXB or $XXM",
-              "category": "Specific market segment name"
-            },
-            "growth": {
-              "value": "X.X% (include % symbol)",
-              "detail": "Growth trajectory context"
-            },
-            "competition": {
-              "value": "Numeric competitor count",
-              "detail": "Competitive landscape summary"
-            },
-            "validation": {
-              "revenue": "6-Figure Founder OR 7-Figure Empire OR 8-Figure Visionary",
-              "vibe": "2025 Vibe: [Trending context]",
-              "feedback": "3 sentences: Market fit, Key challenges, Growth opportunities"
-            },
-            "unfairAdvantages": [
-              "Advantage 1 (max 50 chars)",
-              "Advantage 2 (max 50 chars)",
-              "Advantage 3 (max 50 chars)"
-            ],
-            "bossBattles": [
-              {
-                "number": 1,
-                "title": "Challenge 1 Title",
-                "description": "Challenge 1 Description"
+            role: "system",
+            content: `You are Gary Hormozi, a successful entrepreneur and business advisor. Analyze business ideas and provide structured feedback in JSON format. ${
+              pathway === 'advanced'
+                ? `Use the provided market research data: ${JSON.stringify(marketData)}. Focus on providing creative insights for categories, validation, unfair advantages, challenges, and victory blueprint. The market figures have already been validated.`
+                : 'Provide a basic analysis with redacted market stats for free tier users.'
+            }`
+          },
+          {
+            role: "user",
+            content: `Analyze this business idea:
+            Title: ${title}
+            Description: ${description}
+
+            Provide a response in this exact JSON format:
+            {
+              "title": "Refined, marketable business name (max 60 chars)",
+              "description": "Polished elevator pitch (max 200 chars)",
+              "categories": ["Primary Category", "Secondary Category"],
+              "marketSize": {
+                "value": "Format as $XXB or $XXM",
+                "category": "Specific market segment name"
               },
-              {
-                "number": 2,
-                "title": "Challenge 2 Title",
-                "description": "Challenge 2 Description"
+              "growth": {
+                "value": "X.X% (include % symbol)",
+                "detail": "Growth trajectory context"
               },
-              {
-                "number": 3,
-                "title": "Challenge 3 Title",
-                "description": "Challenge 3 Description"
-              }
-            ],
-            "victoryBlueprint": [
-              "Step 1 - Specific actionable milestone",
-              "Step 2 - Specific actionable milestone",
-              "Step 3 - Specific actionable milestone"
-            ],
-            "competitors": [
-              {
-                "name": "Competitor 1 Name",
-                "reason": "Why they're a key competitor"
+              "competition": {
+                "value": "Numeric competitor count",
+                "detail": "Competitive landscape summary"
               },
-              {
-                "name": "Competitor 2 Name",
-                "reason": "Why they're a key competitor"
+              "validation": {
+                "revenue": "6-Figure Founder OR 7-Figure Empire OR 8-Figure Visionary",
+                "vibe": "2025 Vibe: [Trending context]",
+                "feedback": "3 sentences: Market fit, Key challenges, Growth opportunities"
               },
-              {
-                "name": "Competitor 3 Name",
-                "reason": "Why they're a key competitor"
-              }
-            ]
-          }`
-        }
-      ],
-      model: "llama-3.3-70b-versatile",
-      temperature: 0.7,
-      max_tokens: 4096,
-      response_format: { type: "json_object" }
+              "unfairAdvantages": [
+                "Advantage 1 (max 50 chars)",
+                "Advantage 2 (max 50 chars)",
+                "Advantage 3 (max 50 chars)"
+              ],
+              "bossBattles": [
+                {
+                  "number": 1,
+                  "title": "Challenge 1 Title",
+                  "description": "Challenge 1 Description"
+                },
+                {
+                  "number": 2,
+                  "title": "Challenge 2 Title",
+                  "description": "Challenge 2 Description"
+                },
+                {
+                  "number": 3,
+                  "title": "Challenge 3 Title",
+                  "description": "Challenge 3 Description"
+                }
+              ],
+              "victoryBlueprint": [
+                "Step 1 - Specific actionable milestone",
+                "Step 2 - Specific actionable milestone",
+                "Step 3 - Specific actionable milestone"
+              ],
+              "competitors": [
+                {
+                  "name": "Competitor 1 Name",
+                  "reason": "Why they're a key competitor"
+                },
+                {
+                  "name": "Competitor 2 Name",
+                  "reason": "Why they're a key competitor"
+                },
+                {
+                  "name": "Competitor 3 Name",
+                  "reason": "Why they're a key competitor"
+                }
+              ]
+            }`
+          }
+        ],
+        model: "openai/gpt-oss-120b",
+        temperature: 0.7,
+        max_tokens: 4096,
+        response_format: { type: "json_object" }
+      })
     });
 
+    if (!completionResponse.ok) {
+      throw new Error(`AI Gateway request failed: ${completionResponse.status}`);
+    }
+
+    const completion = await completionResponse.json();
     console.log('Received API response');
     const text = completion.choices[0]?.message?.content || "";
     
@@ -386,20 +382,8 @@ export async function validateIdea(
       });
     }
     
-    // Handle advanced user features
-    if (pathway === 'advanced' && email) {
-      console.log('=== Processing Advanced User Features ===');
-      console.log(`Processing for email: ${email}`);
-      try {
-        console.log('Sending webhook...');
-        await sendWebhook(email, parsedResponse);
-        console.log('Webhook sent successfully');
-      } catch (error) {
-        console.error('Advanced features processing failed:', error);
-        console.error('Stack trace:', error instanceof Error ? error.stack : 'No stack trace');
-        // Continue without failing the whole request
-      }
-    }
+    // Note: Email integration is paused, so we skip webhook functionality
+    console.log('Email integration is paused - skipping webhook');
     
     const finalResponse = {
       ...parsedResponse,
@@ -418,7 +402,7 @@ export async function validateIdea(
     
     if (error instanceof Error) {
       console.error('Error details:', error.message);
-      if (error.message.includes('API configuration')) {
+      if (error.message.includes('AI Gateway configuration')) {
         errorMessage = 'Server configuration error. Please contact support.';
       } else if (error.message.includes('parse')) {
         errorMessage = 'Failed to process AI response. Please try again.';

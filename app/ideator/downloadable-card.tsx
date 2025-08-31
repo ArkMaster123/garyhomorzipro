@@ -59,18 +59,22 @@ export const DownloadableCard: React.FC<DownloadableCardProps> = ({ card, onRead
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
+    // Check if we're on the client side
+    if (typeof document === 'undefined') return
+
     // Set canvas size
     canvas.width = 1200
     canvas.height = 1600
 
     // Load and wait for the font
     const loadFonts = async () => {
-      await document.fonts.load('700 48px Inter') // Bold
-      await document.fonts.load('600 24px Inter') // Semibold
-      await document.fonts.load('500 24px Inter') // Medium
-      await document.fonts.load('400 18px Inter') // Regular
+      try {
+        await document.fonts.load('700 48px Inter') // Bold
+        await document.fonts.load('600 24px Inter') // Semibold
+        await document.fonts.load('500 24px Inter') // Medium
+        await document.fonts.load('400 18px Inter') // Regular
 
-      // Create sophisticated background with multiple gradients
+        // Create sophisticated background with multiple gradients
       const bgGradient = ctx.createLinearGradient(0, 0, 0, canvas.height)
       bgGradient.addColorStop(0, '#0B1121')  // Darker navy
       bgGradient.addColorStop(0.4, '#162033') // Mid tone
@@ -89,21 +93,30 @@ export const DownloadableCard: React.FC<DownloadableCardProps> = ({ card, onRead
       ctx.fillRect(0, 0, canvas.width, canvas.height)
 
       // Load Gary's image
-      const img = new Image()
-      img.crossOrigin = "anonymous"
-      img.src = "/garyhprofile.png"
+      let img: HTMLImageElement | null = null
+      try {
+        img = new Image()
+        img.crossOrigin = "anonymous"
+        img.src = "/garyhprofile.png"
 
-      await new Promise((resolve) => {
-        img.onload = resolve
-      })
+        await new Promise((resolve, reject) => {
+          img!.onload = resolve
+          img!.onerror = reject
+        })
+      } catch (error) {
+        console.warn('Failed to load Gary profile image:', error)
+        // Continue without the image
+      }
 
-      // Draw Gary's image
-      ctx.save()
-      ctx.beginPath()
-      ctx.arc(100, 100, 40, 0, Math.PI * 2)
-      ctx.clip()
-      ctx.drawImage(img, 60, 60, 80, 80)
-      ctx.restore()
+      // Draw Gary's image if loaded
+      if (img) {
+        ctx.save()
+        ctx.beginPath()
+        ctx.arc(100, 100, 40, 0, Math.PI * 2)
+        ctx.clip()
+        ctx.drawImage(img, 60, 60, 80, 80)
+        ctx.restore()
+      }
 
       // Draw header with enhanced gradient
       const titleGradient = ctx.createLinearGradient(60, 160, 60, 200)
@@ -388,6 +401,9 @@ export const DownloadableCard: React.FC<DownloadableCardProps> = ({ card, onRead
       // Notify parent component that canvas is ready
       if (onReady) {
         onReady(canvas)
+      }
+      } catch (error) {
+        console.error('Error in loadFonts:', error)
       }
     }
 
