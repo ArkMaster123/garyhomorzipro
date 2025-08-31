@@ -17,14 +17,18 @@ export default async function Page(props: { params: Promise<{ id: string }> }) {
     notFound();
   }
 
-  const session = await auth();
+  let session = await auth();
 
+  // If no session, create a guest session automatically
   if (!session) {
-    redirect('/api/auth/guest');
+    const { signIn } = await import('@/app/(auth)/auth');
+    await signIn('guest', { redirect: false });
+    session = await auth(); // Get the session again
   }
 
+  // Allow guest access - no redirect needed
   if (chat.visibility === 'private') {
-    if (!session.user) {
+    if (!session?.user) {
       return notFound();
     }
 

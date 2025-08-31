@@ -8,12 +8,16 @@ import { auth } from '../(auth)/auth';
 import { redirect } from 'next/navigation';
 
 export default async function Page() {
-  const session = await auth();
+  let session = await auth();
 
+  // If no session, create a guest session automatically
   if (!session) {
-    redirect('/api/auth/guest');
+    const { signIn } = await import('../(auth)/auth');
+    await signIn('guest', { redirect: false });
+    session = await auth(); // Get the session again
   }
 
+  // Allow guest access - no redirect needed
   const id = generateUUID();
 
   const cookieStore = await cookies();
