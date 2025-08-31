@@ -5,9 +5,6 @@ import React, { useState } from 'react'
 import type { BossBattle, FeasibilityCard, Source } from './types'
 import Image from 'next/image'
 import Link from 'next/link'
-import FairUsePolicy from '../../components/FairUsePolicy'
-import PrivacyPolicy from '../../components/PrivacyPolicy'
-import TermsOfUse from '../../components/TermsOfUse'
 
 // Third-party imports
 import { motion, AnimatePresence } from 'framer-motion'
@@ -55,8 +52,13 @@ import {
 } from 'lucide-react'
 
 // Local imports
-import { validateIdea } from './actions'
-import { DownloadableCard } from './downloadable-card'
+import dynamic from 'next/dynamic'
+
+// Dynamically import DownloadableCard to avoid server-side rendering issues
+const DownloadableCard = dynamic(() => import('./downloadable-card').then(mod => ({ default: mod.DownloadableCard })), {
+  ssr: false,
+  loading: () => <div className="hidden">Loading...</div>
+})
 
 // Utility function for gradient text
 const GradientText: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => (
@@ -125,6 +127,7 @@ const IdeaGeneratorPage: React.FC = () => {
   const [ideaDescription, setIdeaDescription] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
   const [userEmail, setUserEmail] = useState('')
+  const [userName, setUserName] = useState('')
   const [pathway, setPathway] = useState<'free' | 'advanced'>('free')
   const [error, setError] = useState<string | null>(null)
   const [feasibilityCard, setFeasibilityCard] = useState<FeasibilityCard>({
@@ -150,31 +153,57 @@ const IdeaGeneratorPage: React.FC = () => {
     ]
   })
   const [downloadableCanvas, setDownloadableCanvas] = useState<HTMLCanvasElement | null>(null)
-  const [showFairUsePolicy, setShowFairUsePolicy] = useState(false)
-  const [showTermsOfUse, setShowTermsOfUse] = useState(false)
-  const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false)
 
+  // NEW: Direct API call to our working endpoint
   const generateFeasibilityCard = async () => {
     setIsProcessing(true)
     setError(null)
 
     try {
-      const result = await validateIdea(
-        ideaTitle, 
-        ideaDescription, 
-        pathway,
-        pathway === 'advanced' ? userEmail : undefined,
-        true
-      )
+      const requestBody = {
+        title: ideaTitle,
+        description: ideaDescription,
+        pathway: pathway,
+        ...(pathway === 'advanced' && userEmail && userName && {
+          userEmail: userEmail,
+          userName: userName
+        })
+      }
+
+      console.log('🚀 Calling ideator API with:', requestBody)
+
+      const response = await fetch('/api/ideator', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`)
+      }
+
+      const result = await response.json()
+      console.log('✅ API Response:', result)
 
       if (result.success && result.data) {
         setFeasibilityCard(result.data)
         setCurrentStep(3)
+        
+        // TODO: Email integration placeholder
+        if (pathway === 'advanced' && userEmail && userName) {
+          console.log('📧 Email integration placeholder - would send welcome email to:', userEmail)
+          // TODO: Implement email sending via Server Actions
+          // await sendWelcomeEmail(userEmail, userName, ideaTitle)
+        }
       } else {
         setError(result.error || 'Failed to generate feasibility card')
       }
     } catch (err) {
-      setError('An unexpected error occurred. Please try again.')
+      console.error('❌ Error calling ideator API:', err)
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred. Please try again.')
     } finally {
       setIsProcessing(false)
     }
@@ -678,20 +707,36 @@ const IdeaGeneratorPage: React.FC = () => {
                     </button>
                   </div>
                   {pathway === 'advanced' && (
-                    <div className="mb-4">
-                      <label htmlFor="email" className="block font-medium mb-2">
-                        Email (required for advanced features)
-                      </label>
-                      <input
-                        type="email"
-                        id="email"
-                        value={userEmail}
-                        onChange={(e) => setUserEmail(e.target.value)}
-                        className="w-full px-4 py-2 rounded-lg bg-white/10 border border-gray-600 text-white"
-                        placeholder="Enter your email"
-                        required
-                      />
-                    </div>
+                    <>
+                      <div className="mb-4">
+                        <label htmlFor="name" className="block font-medium mb-2">
+                          Name (required for advanced features)
+                        </label>
+                        <input
+                          type="text"
+                          id="name"
+                          value={userName}
+                          onChange={(e) => setUserName(e.target.value)}
+                          className="w-full px-4 py-2 rounded-lg bg-white/10 border border-gray-600 text-white"
+                          placeholder="Enter your name"
+                          required
+                        />
+                      </div>
+                      <div className="mb-4">
+                        <label htmlFor="email" className="block font-medium mb-2">
+                          Email (required for advanced features)
+                        </label>
+                        <input
+                          type="email"
+                          id="email"
+                          value={userEmail}
+                          onChange={(e) => setUserEmail(e.target.value)}
+                          className="w-full px-4 py-2 rounded-lg bg-white/10 border border-gray-600 text-white"
+                          placeholder="Enter your email"
+                          required
+                        />
+                      </div>
+                    </>
                   )}
                 </div>
                 <div className="mb-4">
@@ -728,7 +773,7 @@ const IdeaGeneratorPage: React.FC = () => {
                   <button
                     onClick={generateFeasibilityCard}
                     className="px-6 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-teal-500 hover:from-blue-600 hover:to-teal-600 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={isProcessing}
+                    disabled={isProcessing || (pathway === 'advanced' && (!userName || !userEmail))}
                   >
                     {isProcessing ? (
                       <div className="flex flex-col items-center">
@@ -839,16 +884,30 @@ I'm excited to turn this idea into a reality with Gary's guidance. Let me know w
 
                 
                 {pathway === 'advanced' && (
-                  <div className="mt-8 text-center">
-                    <p className="text-gray-400 text-sm mb-3">
-                      Psst... Gary is waiting to continue this idea into a better plan... 👉
-                    </p>
-                    <Link 
-                      href="/login"
-                      className="inline-flex items-center px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500/20 to-teal-500/20 hover:from-blue-500/30 hover:to-teal-500/30 text-teal-400 text-sm font-medium transition-all"
-                    >
-                      Continue with Gary
-                    </Link>
+                  <div className="mt-8 space-y-6">
+                    <div className="p-4 rounded-xl border border-blue-500/20 bg-blue-500/5">
+                      <h3 className="text-lg font-semibold text-blue-400 mb-2">
+                        📧 Email Integration Coming Soon!
+                      </h3>
+                      <p className="text-gray-400 text-sm mb-4">
+                        We've captured your email and will soon send you a welcome email with additional insights and follow-up content.
+                      </p>
+                      <div className="text-xs text-blue-400/80">
+                        <strong>Placeholder:</strong> Email system will be implemented using Gmail + Nodemailer for automated follow-up sequences.
+                      </div>
+                    </div>
+                    
+                    <div className="text-center">
+                      <p className="text-gray-400 text-sm mb-3">
+                        Psst... Gary is waiting to continue this idea into a better plan... 👉
+                      </p>
+                      <Link 
+                        href="/login"
+                        className="inline-flex items-center px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500/20 to-teal-500/20 hover:from-blue-500/30 hover:to-teal-500/30 text-blue-400 text-sm font-medium transition-all"
+                      >
+                        Continue with Gary
+                      </Link>
+                    </div>
                   </div>
                 )}
               </>
@@ -871,25 +930,7 @@ I'm excited to turn this idea into a reality with Gary's guidance. Let me know w
                 </span>
               </div>
               <div className="flex space-x-6">
-                <button 
-                  onClick={() => setShowTermsOfUse(true)}
-                  className={`${theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
-                >
-                  Terms
-                </button>
-                <button 
-                  onClick={() => setShowPrivacyPolicy(true)}
-                  className={`${theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
-                >
-                  Privacy
-                </button>
                 <Link href="#" className={`${theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>Contact</Link>
-                <button 
-                  onClick={() => setShowFairUsePolicy(true)}
-                  className={`${theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}
-                >
-                  Fair Use Policy
-                </button>
               </div>
             </div>
             <div className="mt-8 text-center text-gray-600 dark:text-gray-500 light:text-gray-600 text-sm">
@@ -899,21 +940,7 @@ I'm excited to turn this idea into a reality with Gary's guidance. Let me know w
           </div>
         </footer>
 
-        <FairUsePolicy 
-          isOpen={showFairUsePolicy}
-          onClose={() => setShowFairUsePolicy(false)}
-          isDarkMode={theme === 'dark'}
-        />
-        <TermsOfUse
-          isOpen={showTermsOfUse}
-          onClose={() => setShowTermsOfUse(false)}
-          isDarkMode={theme === 'dark'}
-        />
-        <PrivacyPolicy
-          isOpen={showPrivacyPolicy}
-          onClose={() => setShowPrivacyPolicy(false)}
-          isDarkMode={theme === 'dark'}
-        />
+
       </div>
     </div>
   )

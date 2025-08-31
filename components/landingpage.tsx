@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { 
   ArrowRight, Check, ChevronDown, Menu, X, 
   MonitorPlay, Database, Wrench, Bot, 
-  BrainCircuit, Target, BarChart3, Moon, Sun 
+  BrainCircuit, Target, BarChart3, Moon, Sun, Star
 } from 'lucide-react'
 
 // Utility function for gradient text
@@ -249,7 +249,7 @@ const LandingPage: React.FC = () => {
                 <a href="#features" className="text-gray-600 dark:text-gray-400 light:text-[#1E293B]/80 hover:text-white dark:hover:text-white light:hover:text-[#1E293B] transition-colors">Features</a>
                 <a href="#process" className="text-gray-600 dark:text-gray-400 light:text-[#1E293B]/80 hover:text-white dark:hover:text-white light:hover:text-[#1E293B] transition-colors">Process</a>
                 <a href="#pricing" className="text-gray-600 dark:text-gray-400 light:text-[#1E293B]/80 hover:text-white dark:hover:text-white light:hover:text-[#1E293B] transition-colors">Pricing</a>
-                <Link href="/idea-generator" className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors light:bg-[#1E293B] light:text-white">
+                <Link href="/ideator" className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors light:bg-[#1E293B] light:text-white">
                   Idea Generator
                 </Link>
                 <button
@@ -344,16 +344,18 @@ const LandingPage: React.FC = () => {
                 </div>
               </div>
               
-              <div className="relative">
-                <video 
-                  src="/video/garyalive.mp4" 
-                  width={600} 
-                  height={400}
-                  autoPlay
-                  muted
-                  loop
-                  className="rounded-lg object-cover"
-                />
+              <div className="relative flex justify-center">
+                <div className="w-[448px] h-[448px] rounded-full overflow-hidden border-4 border-teal-500/30 shadow-2xl">
+                  <video 
+                    src="/video/garyalive.mp4" 
+                    width={448} 
+                    height={448}
+                    autoPlay
+                    muted
+                    loop
+                    className="w-full h-full object-cover"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -517,6 +519,96 @@ const LandingPage: React.FC = () => {
           </div>
         </section>
 
+        {/* Testimonials Section */}
+        <section className="py-24 relative">
+          <div className={`absolute inset-0 transition-opacity duration-300 ${
+            theme === 'dark' ? 'opacity-100' : 'opacity-5'
+          }`}>
+            <div className="absolute inset-0 bg-gradient-to-b from-[#0B1121] to-[#1E293B]" />
+          </div>
+          <div className="container mx-auto px-6 relative z-10">
+            <div className="text-center max-w-3xl mx-auto mb-16">
+              <h2 className="text-4xl md:text-5xl font-bold mb-4 light:text-[#1E293B]">
+                <GradientText>Get Ready to 10x Your Sales/Marketing with a New AI Team Member</GradientText>
+              </h2>
+              <p className="text-sm text-gray-400 dark:text-gray-50 light:text-[#1E293B]/80">
+                Hear from our users
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[
+                {
+                  quote: "I asked about monetisation strategies for my business plan, what took me weeks to figure out Gary came up with in minutes",
+                  name: "Dr. Piotr Jarecki",
+                  title: "Founder of WebMed.pl - Medical AI Expert",
+                  image: "https://s3-eu-west-1.amazonaws.com/znanylekarz.pl/doctor/afde21/afde21946dded85838642152a578d8bb_large.jpg",
+                  rating: 5
+                },
+                {
+                  quote: "Gary is great, he just helped me to plan my youtube channel",
+                  name: "Alexandra Spalato",
+                  title: "Developer & Founder - N8N Viral Queen, AI Automation Engineer",
+                  image: "https://cache.sessionize.com/image/4a4b-400o400o2-123d9670-f6e1-4644-a9b1-1784232c8730.jpg",
+                  rating: 5
+                },
+                {
+                  quote: "As someone who builds AI, I'm properly impressed.",
+                  name: "Henryk Brzozowski",
+                  title: "CEO and Voice AI Expert - Lunaris AI",
+                  image: "https://cdn.prod.website-files.com/657639ebfb91510f45654149/666c658e943215854196e94b_13-p-500.jpeg",
+                  rating: 4
+                }
+              ].map((testimonial, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  whileHover={{ y: -8 }}
+                  className={`p-6 rounded-xl backdrop-blur-sm border transition-all h-full ${
+                    theme === 'dark'
+                      ? 'bg-[#1E293B]/50 border-gray-800 hover:border-teal-500/50'
+                      : 'bg-white/80 border-gray-200 hover:border-teal-500'
+                  }`}
+                >
+                  <div className="flex flex-col h-full relative">
+                    <div className="absolute top-2 right-2 flex space-x-0.5" aria-label={`${testimonial.rating} out of 5 stars`} title={`${testimonial.rating} Star Rating`}>
+                      {[...Array(5)].map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`w-5 h-5 ${i < testimonial.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}
+                          transition-all duration-300 group-hover:scale-110`}
+                        />
+                      ))}
+                    </div>
+                    <div className="mb-6">
+                      <Image
+                        src={testimonial.image}
+                        alt={testimonial.name}
+                        width={64}
+                        height={64}
+                        className="rounded-full"
+                      />
+                    </div>
+                    <p className="text-gray-600 dark:text-gray-200 light:text-[#1E293B]/80 italic mb-6 flex-grow">
+                      "{testimonial.quote}"
+                    </p>
+                    <div>
+                      <p className="font-bold text-gray-900 dark:text-white light:text-[#1E293B] mb-1">
+                        {testimonial.name}
+                      </p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 light:text-[#1E293B]/80">
+                        {testimonial.title}
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* Idea Generator CTA */}
         <section className="py-24 relative">
           <div className="container mx-auto px-6 relative z-10">
@@ -527,7 +619,7 @@ const LandingPage: React.FC = () => {
               <p className="text-xl text-gray-400 dark:text-gray-400 light:text-[#1E293B]/80 mb-8">
                 Use our AI-powered Idea Generator to validate your business concept and get instant feedback.
               </p>
-              <Link href="/idea-generator" className="inline-block px-8 py-4 rounded-lg bg-gradient-to-r from-blue-500 to-teal-500 hover:from-blue-600 hover:to-teal-600 transition-all text-white font-semibold">
+              <Link href="/ideator" className="inline-block px-8 py-4 rounded-lg bg-gradient-to-r from-blue-500 to-teal-500 hover:from-blue-600 hover:to-teal-600 transition-all text-white font-semibold">
                 Try Idea Generator
               </Link>
             </div>
@@ -658,7 +750,7 @@ const LandingPage: React.FC = () => {
               <div className="space-y-6">
                 <div className="flex items-center space-x-4 mb-8">
                   <div className="w-12 h-12 rounded-full bg-[#1E293B] flex items-center justify-center">
-                    <Image src="/astronaut-logo.svg" alt="Gary Hormozi Logo" width={32} height={32} />
+                    <Image src="/garyhprofile.png" alt="Gary Hormozi Logo" width={32} height={32} className="rounded-full" />
                   </div>
                   <div>
                     <h3 className="text-xl font-bold text-white light:text-[#1E293B]">Gary Hormozi</h3>
@@ -691,8 +783,8 @@ const LandingPage: React.FC = () => {
               {/* ChatGPT Column */}
               <div className="space-y-6">
                 <div className="flex items-center space-x-4 mb-8">
-                  <div className="w-12 h-12 rounded-full bg-[#1E293B] flex items-center justify-center">
-                    <span className="text-2xl font-bold">GPT</span>
+                  <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center">
+                    <Image src="/chatgpt-logo.png" alt="ChatGPT Logo" width={32} height={32} />
                   </div>
                   <div>
                     <h3 className="text-xl font-bold text-white light:text-[#1E293B]">ChatGPT</h3>
