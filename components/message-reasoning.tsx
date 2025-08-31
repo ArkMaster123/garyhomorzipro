@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ChevronDownIcon, LoaderIcon } from './icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Markdown } from './markdown';
+import Image from 'next/image';
 
 interface MessageReasoningProps {
   isLoading: boolean;
@@ -34,19 +35,19 @@ export function MessageReasoning({
   return (
     <div className="flex flex-col">
       {isLoading ? (
-        <div className="flex flex-row gap-2 items-center">
-          <div className="font-medium">Reasoning</div>
+        <div className="flex flex-row gap-3 items-center">
+          <div className="font-medium text-primary">Reasoning</div>
           <div className="animate-spin">
             <LoaderIcon />
           </div>
         </div>
       ) : (
-        <div className="flex flex-row gap-2 items-center">
+        <div className="flex flex-row gap-3 items-center">
           <div className="font-medium">Reasoned for a few seconds</div>
           <button
             data-testid="message-reasoning-toggle"
             type="button"
-            className="cursor-pointer"
+            className="cursor-pointer hover:opacity-80 transition-opacity"
             onClick={() => {
               setIsExpanded(!isExpanded);
             }}

@@ -1,7 +1,7 @@
 'use client';
 import cx from 'classnames';
 import { AnimatePresence, motion } from 'framer-motion';
-import { memo, useState } from 'react';
+import { memo, useState, useCallback, useMemo } from 'react';
 import type { Vote } from '@/lib/db/schema';
 import { DocumentToolCall, DocumentToolResult } from './document';
 import { PencilEditIcon, SparklesIcon } from './icons';
@@ -23,6 +23,7 @@ import { useDataStream } from './data-stream-provider';
 import { TooltipProvider } from './ui/tooltip';
 import { generateUUID } from '@/lib/utils';
 import { PaperclipIcon } from './icons';
+import Image from 'next/image';
 
 
 // Type narrowing is handled by TypeScript's control flow analysis
@@ -79,7 +80,19 @@ const PurePreviewMessage = ({
           {message.role === 'assistant' && (
             <div className="size-8 flex items-center rounded-full justify-center ring-1 shrink-0 ring-white/20 dark:ring-white/10 bg-white/20 dark:bg-white/10 backdrop-blur-md shadow-lg">
               <div className="translate-y-px">
-                <SparklesIcon size={14} />
+                {isLoading ? (
+                  <div className="w-5 h-5 rounded-full overflow-hidden">
+                    <Image
+                      src="/images/garythinking.gif"
+                      alt="AI reasoning animation"
+                      width={20}
+                      height={20}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <SparklesIcon size={14} />
+                )}
               </div>
             </div>
           )}
