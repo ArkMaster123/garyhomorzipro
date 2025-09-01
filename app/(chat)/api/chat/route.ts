@@ -8,6 +8,11 @@ import {
 } from 'ai';
 import { auth, type UserType } from '@/app/(auth)/auth';
 import { type RequestHints, systemPrompt } from '@/lib/ai/prompts';
+import { 
+  searchKnowledgeBase, 
+  enhancePersonaPromptWithKnowledge, 
+  extractSearchTermsFromMessage 
+} from '@/lib/ai/knowledge-base';
 import {
   createStreamId,
   deleteChatById,
@@ -164,13 +169,43 @@ export async function POST(request: Request) {
           ? await getUserPersona(session.user.id)
           : 'default';
 
+        // Search knowledge base for relevant context if using Gary Hormozi or Rory Sutherland persona
+        let enhancedSystemPrompt = systemPrompt({ 
+          selectedChatModel: effectiveModelId, 
+          requestHints, 
+          persona: userPersona as any 
+        });
+
+        if (userPersona === 'gary-hormozi' || userPersona === 'rory-sutherland') {
+          try {
+            // Extract search terms from the latest user message
+            const searchQuery = extractSearchTermsFromMessage(message.parts[0]?.text || '');
+            
+            if (searchQuery.length > 0) {
+              // Search for relevant knowledge base content
+              const knowledgeContext = await searchKnowledgeBase(
+                searchQuery, 
+                userPersona as any,
+                { limit: 3, threshold: 0.6 }
+              );
+
+              // Enhance the system prompt with knowledge base context
+              if (knowledgeContext.results.length > 0) {
+                enhancedSystemPrompt = enhancePersonaPromptWithKnowledge(
+                  enhancedSystemPrompt,
+                  knowledgeContext
+                );
+              }
+            }
+          } catch (error) {
+            console.error('Error searching knowledge base:', error);
+            // Continue with original system prompt if knowledge base search fails
+          }
+        }
+
         const result = streamText({
           model: createDynamicModel(effectiveModelId),
-          system: systemPrompt({ 
-            selectedChatModel: effectiveModelId, 
-            requestHints, 
-            persona: userPersona as any 
-          }),
+          system: enhancedSystemPrompt,
           messages: convertToModelMessages(uiMessages),
           stopWhen: stepCountIs(5),
           experimental_activeTools:

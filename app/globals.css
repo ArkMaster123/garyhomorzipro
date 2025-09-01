@@ -20,6 +20,20 @@
     .text-balance {
         text-wrap: balance;
     }
+
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .line-clamp-3 {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
 }
 
 @layer base {
@@ -58,6 +72,7 @@
         --sidebar-border: 220 13% 91%;
         --sidebar-ring: 217.2 91.2% 59.8%;
     }
+
     .dark {
         --background: 240 10% 3.9%;
         --foreground: 0 0% 98%;
@@ -132,7 +147,7 @@
     @apply bg-background dark:bg-zinc-800 outline-none selection:bg-zinc-900 !important;
 }
 
-.ͼo.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground,
+.ͼo.cm-focused>.cm-scroller>.cm-selectionLayer .cm-selectionBackground,
 .ͼo.cm-selectionBackground,
 .ͼo.cm-content::selection {
     @apply bg-zinc-200 dark:bg-zinc-900 !important;
