@@ -2,6 +2,7 @@ import { embed } from 'ai';
 import { db } from '@/lib/db';
 import { knowledgeBase, knowledgeChunk } from '@/lib/db/schema';
 import { eq, sql } from 'drizzle-orm';
+import { gateway } from './gateway';
 import type { PersonaType } from './personas';
 
 export interface KnowledgeSearchResult {
@@ -54,51 +55,94 @@ export async function searchKnowledgeBase(
       };
     }
 
-    // Generate embedding for the search query
+    // Generate embedding for the search query using gateway
+    const getEmbeddingModel = (modelString: string) => {
+      switch (modelString) {
+        case 'openai:text-embedding-3-small':
+          return gateway.textEmbeddingModel('openai/text-embedding-3-small');
+        case 'openai:text-embedding-3-large':
+          return gateway.textEmbeddingModel('openai/text-embedding-3-large');
+        case 'openai:text-embedding-ada-002':
+          return gateway.textEmbeddingModel('openai/text-embedding-ada-002');
+        default:
+          return gateway.textEmbeddingModel('openai/text-embedding-3-small'); // fallback
+      }
+    };
+
+    const embeddingModelObj = getEmbeddingModel(embeddingModel);
     const { embedding: queryEmbedding } = await embed({
-      model: embeddingModel,
+      model: embeddingModelObj,
       value: query,
     });
 
-    // Search through knowledge base entries
-    const knowledgeResults = await db
-      .select({
-        id: knowledgeBase.id,
-        title: knowledgeBase.title,
-        content: knowledgeBase.content,
-        personaId: knowledgeBase.personaId,
-        contentType: knowledgeBase.contentType,
-        metadata: knowledgeBase.metadata,
-        // Calculate cosine similarity using PostgreSQL vector operations
-        similarity: sql<number>`1 - (${knowledgeBase.embedding} <=> ${queryEmbedding}::vector)`,
-      })
+    // Search through knowledge base entries - use same approach as admin API
+    const documents = await db
+      .select()
       .from(knowledgeBase)
-      .where(eq(knowledgeBase.personaId, dbPersonaId))
-      .having(sql`1 - (${knowledgeBase.embedding} <=> ${queryEmbedding}::vector) > ${threshold}`)
-      .orderBy(sql`1 - (${knowledgeBase.embedding} <=> ${queryEmbedding}::vector) DESC`)
-      .limit(limit);
+      .where(eq(knowledgeBase.personaId, dbPersonaId));
+
+    console.log('🔍 searchKnowledgeBase debug:', {
+      dbPersonaId,
+      documentsFound: documents.length,
+      queryEmbeddingLength: queryEmbedding.length,
+      threshold,
+      embeddingModel
+    });
+
+    // Calculate cosine similarity for each document (same as admin API)
+    const knowledgeResults = documents.map(doc => {
+      if (!doc.embedding) {
+        console.warn('Document missing embedding:', doc.id);
+        return null;
+      }
+      const similarity = calculateCosineSimilarity(queryEmbedding, doc.embedding);
+      console.log(`📊 Document "${doc.title}" similarity: ${similarity}`);
+      return {
+        id: doc.id,
+        title: doc.title,
+        content: doc.content,
+        personaId: doc.personaId,
+        contentType: doc.contentType,
+        metadata: doc.metadata,
+        similarity,
+      };
+    }).filter(Boolean) // Remove null entries
+      .filter(result => {
+        const passes = result.similarity >= threshold;
+        console.log(`✅ Document "${result.title}" passes threshold (${result.similarity} >= ${threshold}): ${passes}`);
+        return passes;
+      })
+      .sort((a, b) => b.similarity - a.similarity)
+      .slice(0, limit);
+
+    console.log('📋 Final knowledgeResults:', knowledgeResults.length);
 
     // Search through knowledge chunks for more granular results
-    const chunkResults = await db
-      .select({
-        id: knowledgeChunk.id,
-        knowledgeBaseId: knowledgeChunk.knowledgeBaseId,
-        content: knowledgeChunk.content,
-        chunkIndex: knowledgeChunk.chunkIndex,
-        metadata: knowledgeChunk.metadata,
-        // Join with knowledge base for persona filtering and titles
-        personaId: knowledgeBase.personaId,
-        title: knowledgeBase.title,
-        contentType: knowledgeBase.contentType,
-        // Calculate cosine similarity
-        similarity: sql<number>`1 - (${knowledgeChunk.embedding} <=> ${queryEmbedding}::vector)`,
-      })
+    const chunks = await db
+      .select()
       .from(knowledgeChunk)
       .leftJoin(knowledgeBase, eq(knowledgeChunk.knowledgeBaseId, knowledgeBase.id))
-      .where(eq(knowledgeBase.personaId, dbPersonaId))
-      .having(sql`1 - (${knowledgeChunk.embedding} <=> ${queryEmbedding}::vector) > ${threshold}`)
-      .orderBy(sql`1 - (${knowledgeChunk.embedding} <=> ${queryEmbedding}::vector) DESC`)
-      .limit(limit * 2); // Get more chunks since they're more granular
+      .where(eq(knowledgeBase.personaId, dbPersonaId));
+
+    const chunkResults = chunks.map(chunk => {
+      if (!chunk.knowledgeChunk?.embedding) {
+        console.warn('Chunk missing embedding:', chunk.knowledgeChunk?.id);
+        return null;
+      }
+      const similarity = calculateCosineSimilarity(queryEmbedding, chunk.knowledgeChunk.embedding);
+      return {
+        id: chunk.knowledgeChunk.id,
+        title: `${chunk.knowledgeBase?.title} (Chunk ${chunk.knowledgeChunk.chunkIndex + 1})`,
+        content: chunk.knowledgeChunk.content,
+        similarity,
+        metadata: chunk.knowledgeChunk.metadata,
+        source: 'chunk' as const,
+        personaId: chunk.knowledgeBase?.personaId || '',
+      };
+    }).filter(Boolean) // Remove null entries
+      .filter(result => result.similarity >= threshold)
+      .sort((a, b) => b.similarity - a.similarity)
+      .slice(0, limit * 2); // Get more chunks since they're more granular
 
     // Combine and format results
     const formattedKnowledgeResults: KnowledgeSearchResult[] = knowledgeResults.map(result => ({
@@ -113,12 +157,12 @@ export async function searchKnowledgeBase(
 
     const formattedChunkResults: KnowledgeSearchResult[] = chunkResults.map(result => ({
       id: result.id,
-      title: `${result.title} (Chunk ${result.chunkIndex + 1})`,
+      title: result.title,
       content: result.content,
       similarity: result.similarity,
       metadata: result.metadata,
-      source: 'chunk' as const,
-      personaId: result.personaId || '',
+      source: result.source,
+      personaId: result.personaId,
     }));
 
     // Combine and sort all results by similarity
@@ -197,4 +241,32 @@ export function extractSearchTermsFromMessage(message: string): string {
 
   // Take up to the first 10 meaningful words to create a focused search query
   return words.slice(0, 10).join(' ');
+}
+
+/**
+ * Calculate cosine similarity between two vectors (same as admin API)
+ */
+function calculateCosineSimilarity(vecA: number[], vecB: number[]): number {
+  if (vecA.length !== vecB.length) {
+    throw new Error('Vectors must have the same length');
+  }
+
+  let dotProduct = 0;
+  let normA = 0;
+  let normB = 0;
+
+  for (let i = 0; i < vecA.length; i++) {
+    dotProduct += vecA[i] * vecB[i];
+    normA += vecA[i] * vecA[i];
+    normB += vecB[i] * vecB[i];
+  }
+
+  normA = Math.sqrt(normA);
+  normB = Math.sqrt(normB);
+
+  if (normA === 0 || normB === 0) {
+    return 0;
+  }
+
+  return dotProduct / (normA * normB);
 }
