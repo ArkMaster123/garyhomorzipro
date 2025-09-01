@@ -1,6 +1,24 @@
 import { tool } from 'ai';
 import { z } from 'zod';
 
+// Rate limiting for Brave Search API (1 request per second, 15000 per month)
+let lastRequestTime = 0;
+const MIN_REQUEST_INTERVAL = 3000; // 3 seconds to be safe
+
+async function rateLimitedRequest(url: string, options: RequestInit): Promise<Response> {
+  const now = Date.now();
+  const timeSinceLastRequest = now - lastRequestTime;
+  
+  if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
+    const waitTime = MIN_REQUEST_INTERVAL - timeSinceLastRequest;
+    console.log(`⏳ Rate limiting: waiting ${waitTime}ms before next Brave Search request`);
+    await new Promise(resolve => setTimeout(resolve, waitTime));
+  }
+  
+  lastRequestTime = Date.now();
+  return fetch(url, options);
+}
+
 export const enhancedWebSearch = tool({
   description: `Search the web for current business information, market data, trends, and real-time updates. 
   Use this when users ask about:
@@ -34,7 +52,7 @@ export const enhancedWebSearch = tool({
     }
 
     // Enhance query based on focus area and Gary Hormozi's interests
-    const enhancedQuery = enhanceQueryForBusiness(query, focus, includeStats);
+    const enhancedQuery = enhanceQueryForBusiness(query, focus || 'general', includeStats || false);
     
     // Map timeframe to Brave Search freshness parameter
     const freshnessMap: Record<string, string> = {
@@ -55,12 +73,12 @@ export const enhancedWebSearch = tool({
       search_lang: 'en'
     });
 
-    if (timeframe !== 'any') {
+    if (timeframe && timeframe !== 'any') {
       params.append('freshness', freshnessMap[timeframe]);
     }
 
     try {
-      const response = await fetch(
+      const response = await rateLimitedRequest(
         `https://api.search.brave.com/res/v1/web/search?${params}`,
         {
           headers: {
@@ -77,7 +95,7 @@ export const enhancedWebSearch = tool({
       const data = await response.json();
       
       // Filter and format results for business context
-      const filteredResults = filterAndFormatResults(data.web?.results || [], focus, includeStats);
+      const filteredResults = filterAndFormatResults(data.web?.results || [], focus || 'general', includeStats || false);
       
       return {
         query: enhancedQuery,

@@ -106,7 +106,7 @@ export async function searchKnowledgeBase(
         metadata: doc.metadata,
         similarity,
       };
-    }).filter(Boolean) // Remove null entries
+    }).filter((result): result is NonNullable<typeof result> => result !== null) // Remove null entries
       .filter(result => {
         const passes = result.similarity >= threshold;
         console.log(`✅ Document "${result.title}" passes threshold (${result.similarity} >= ${threshold}): ${passes}`);
@@ -125,21 +125,21 @@ export async function searchKnowledgeBase(
       .where(eq(knowledgeBase.personaId, dbPersonaId));
 
     const chunkResults = chunks.map(chunk => {
-      if (!chunk.knowledgeChunk?.embedding) {
-        console.warn('Chunk missing embedding:', chunk.knowledgeChunk?.id);
+      if (!chunk.KnowledgeChunk?.embedding) {
+        console.warn('Chunk missing embedding:', chunk.KnowledgeChunk?.id);
         return null;
       }
-      const similarity = calculateCosineSimilarity(queryEmbedding, chunk.knowledgeChunk.embedding);
+      const similarity = calculateCosineSimilarity(queryEmbedding, chunk.KnowledgeChunk.embedding);
       return {
-        id: chunk.knowledgeChunk.id,
-        title: `${chunk.knowledgeBase?.title} (Chunk ${chunk.knowledgeChunk.chunkIndex + 1})`,
-        content: chunk.knowledgeChunk.content,
+        id: chunk.KnowledgeChunk.id,
+        title: `${chunk.KnowledgeBase?.title} (Chunk ${chunk.KnowledgeChunk.chunkIndex + 1})`,
+        content: chunk.KnowledgeChunk.content,
         similarity,
-        metadata: chunk.knowledgeChunk.metadata,
+        metadata: chunk.KnowledgeChunk.metadata,
         source: 'chunk' as const,
-        personaId: chunk.knowledgeBase?.personaId || '',
+        personaId: chunk.KnowledgeBase?.personaId || '',
       };
-    }).filter(Boolean) // Remove null entries
+    }).filter((result): result is NonNullable<typeof result> => result !== null) // Remove null entries
       .filter(result => result.similarity >= threshold)
       .sort((a, b) => b.similarity - a.similarity)
       .slice(0, limit * 2); // Get more chunks since they're more granular

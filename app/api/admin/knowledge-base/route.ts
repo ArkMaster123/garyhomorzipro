@@ -75,13 +75,11 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const personaId = searchParams.get('personaId');
 
-    let query = db.select().from(knowledgeBase);
-    
-    if (personaId) {
-      query = query.where(eq(knowledgeBase.personaId, personaId));
-    }
-
-    const entries = await query.orderBy(knowledgeBase.createdAt);
+    const entries = await db
+      .select()
+      .from(knowledgeBase)
+      .where(personaId ? eq(knowledgeBase.personaId, personaId) : undefined)
+      .orderBy(knowledgeBase.createdAt);
 
     return NextResponse.json({ success: true, data: entries });
   } catch (error) {

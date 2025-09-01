@@ -6,13 +6,14 @@ import { eq } from 'drizzle-orm';
 // GET /api/admin/email-templates/[id] - Get specific email template
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const template = await db
       .select()
       .from(emailTemplates)
-      .where(eq(emailTemplates.id, params.id))
+      .where(eq(emailTemplates.id, id))
       .limit(1);
 
     if (!template.length) {
@@ -38,9 +39,10 @@ export async function GET(
 // PUT /api/admin/email-templates/[id] - Update specific email template
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await request.json();
     const { name, type, subject, htmlContent, dayNumber, isActive } = body;
 
@@ -55,7 +57,7 @@ export async function PUT(
         isActive,
         updatedAt: new Date(),
       })
-      .where(eq(emailTemplates.id, params.id))
+      .where(eq(emailTemplates.id, id))
       .returning();
 
     if (!updatedTemplate.length) {
@@ -82,12 +84,13 @@ export async function PUT(
 // DELETE /api/admin/email-templates/[id] - Delete specific email template
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const deletedTemplate = await db
       .delete(emailTemplates)
-      .where(eq(emailTemplates.id, params.id))
+      .where(eq(emailTemplates.id, id))
       .returning();
 
     if (!deletedTemplate.length) {

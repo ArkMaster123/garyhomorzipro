@@ -8,9 +8,10 @@ import { gateway } from '@/lib/ai/gateway';
 // GET /api/admin/knowledge-base/[id] - Get specific knowledge base entry
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     // Temporarily remove admin check for development
     // const session = await auth();
     // if (!session?.user?.id) {
@@ -31,7 +32,7 @@ export async function GET(
     const entry = await db
       .select()
       .from(knowledgeBase)
-      .where(eq(knowledgeBase.id, params.id))
+      .where(eq(knowledgeBase.id, id))
       .limit(1);
 
     if (entry.length === 0) {
@@ -42,7 +43,7 @@ export async function GET(
     const chunks = await db
       .select()
       .from(knowledgeChunk)
-      .where(eq(knowledgeChunk.knowledgeBaseId, params.id))
+      .where(eq(knowledgeChunk.knowledgeBaseId, id))
       .orderBy(knowledgeChunk.chunkIndex);
 
     return NextResponse.json({ 
@@ -64,9 +65,10 @@ export async function GET(
 // PUT /api/admin/knowledge-base/[id] - Update knowledge base entry
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     // Temporarily remove admin check for development
     // const session = await auth();
     // if (!session?.user?.id) {
@@ -91,7 +93,7 @@ export async function PUT(
     const existingEntry = await db
       .select()
       .from(knowledgeBase)
-      .where(eq(knowledgeBase.id, params.id))
+      .where(eq(knowledgeBase.id, id))
       .limit(1);
 
     if (existingEntry.length === 0) {
@@ -114,7 +116,7 @@ export async function PUT(
       });
       updateData.embedding = embedding;
       updateData.metadata = { 
-        ...existingEntry[0].metadata,
+        ...(existingEntry[0].metadata || {}),
         embeddingModel, 
         originalLength: content.length,
         lastUpdated: new Date().toISOString()
@@ -124,7 +126,7 @@ export async function PUT(
     const [updatedEntry] = await db
       .update(knowledgeBase)
       .set(updateData)
-      .where(eq(knowledgeBase.id, params.id))
+      .where(eq(knowledgeBase.id, id))
       .returning();
 
     return NextResponse.json({ success: true, data: updatedEntry });
@@ -140,9 +142,10 @@ export async function PUT(
 // DELETE /api/admin/knowledge-base/[id] - Delete knowledge base entry
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     // Temporarily remove admin check for development
     // const session = await auth();
     // if (!session?.user?.id) {
@@ -163,7 +166,7 @@ export async function DELETE(
     // Delete the entry (chunks will be cascade deleted)
     const deletedEntry = await db
       .delete(knowledgeBase)
-      .where(eq(knowledgeBase.id, params.id))
+      .where(eq(knowledgeBase.id, id))
       .returning();
 
     if (deletedEntry.length === 0) {

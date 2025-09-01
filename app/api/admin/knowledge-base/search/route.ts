@@ -47,8 +47,6 @@ export async function POST(request: NextRequest) {
     const { embedding: queryEmbedding } = await embed({
       model: embeddingModelObj,
       value: query,
-      dimensions: dimensions ? parseInt(dimensions) : undefined,
-      encodingFormat: encodingFormat as 'float' | 'base64',
     });
 
     let results = [];
@@ -63,17 +61,17 @@ export async function POST(request: NextRequest) {
 
       // Calculate cosine similarity for each chunk
       const chunkResults = chunks.map(chunk => {
-        if (!chunk.embedding) {
-          console.warn('Chunk missing embedding:', chunk.id);
+        if (!chunk.KnowledgeChunk.embedding) {
+          console.warn('Chunk missing embedding:', chunk.KnowledgeChunk.id);
           return null;
         }
-        const similarity = calculateCosineSimilarity(queryEmbedding, chunk.embedding);
+        const similarity = calculateCosineSimilarity(queryEmbedding, chunk.KnowledgeChunk.embedding);
         return {
-          ...chunk,
+          ...chunk.KnowledgeChunk,
           similarity,
-          sourceTitle: chunk.title,
+          sourceTitle: chunk.KnowledgeBase.title,
         };
-      }).filter(Boolean); // Remove null entries
+      }).filter((result): result is NonNullable<typeof result> => result !== null); // Remove null entries
 
       // Filter by threshold and sort by similarity
       results = chunkResults
@@ -99,7 +97,7 @@ export async function POST(request: NextRequest) {
           ...doc,
           similarity,
         };
-      }).filter(Boolean); // Remove null entries
+      }).filter((result): result is NonNullable<typeof result> => result !== null); // Remove null entries
 
       // Filter by threshold and sort by similarity
       results = documentResults

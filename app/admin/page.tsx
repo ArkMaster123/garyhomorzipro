@@ -185,17 +185,15 @@ export default function AdminPage() {
         setTemplates(result.data);
       } else {
         toast({
-          title: "Error",
+          type: "error",
           description: "Failed to load email templates.",
-          variant: "destructive",
         });
       }
     } catch (error) {
       console.error('Error loading templates:', error);
       toast({
-        title: "Error",
+        type: "error",
         description: "Failed to load email templates.",
-        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -227,17 +225,17 @@ export default function AdminPage() {
         setKnowledgeBaseEntries(result.data);
       } else {
         toast({
-          title: "Error",
+          type: "error",
           description: "Failed to load knowledge base entries.",
-          variant: "destructive",
+          
         });
       }
     } catch (error) {
       console.error('Error loading knowledge base:', error);
       toast({
-        title: "Error",
+        type: "error",
         description: "Failed to load knowledge base entries.",
-        variant: "destructive",
+        
       });
     }
   };
@@ -277,30 +275,30 @@ export default function AdminPage() {
       
       if (result.success) {
         toast({
-          title: "Success",
+          type: "success",
           description: `Knowledge base entry created with ${result.data.chunksCreated} chunks. Estimated cost: $${result.data.actualCost.toFixed(4)}`,
         });
         loadKnowledgeBase(); // Reload the list
       } else {
         toast({
-          title: "Error",
+          type: "error",
           description: result.error || "Failed to upload file.",
-          variant: "destructive",
+          
         });
       }
     } catch (error) {
       console.error('Error uploading file:', error);
       toast({
-        title: "Error",
+        type: "error",
         description: "Failed to upload file.",
-        variant: "destructive",
+        
       });
     } finally {
       setUploadingFile(false);
     }
   };
 
-  const estimateUploadCost = async (file: File, textContent?: string) => {
+  const estimateUploadCost = async (file?: File, textContent?: string) => {
     try {
       const formData = new FormData();
       
@@ -354,22 +352,22 @@ export default function AdminPage() {
         setTemplates(templates.map(t => t.id === template.id ? result.data : t));
         setEditingTemplate(null);
         toast({
-          title: "Success",
+          type: "success",
           description: "Email template has been updated successfully.",
         });
       } else {
         toast({
-          title: "Error",
+          type: "error",
           description: result.error || "Failed to save template. Please try again.",
-          variant: "destructive",
+          
         });
       }
     } catch (error) {
       console.error('Error saving template:', error);
       toast({
-        title: "Error",
+        type: "error",
         description: "Failed to save template. Please try again.",
-        variant: "destructive",
+        
       });
     } finally {
       setSaving(false);
@@ -387,7 +385,7 @@ export default function AdminPage() {
     }));
     
     toast({
-      title: "Setting Updated",
+      type: "success",
       description: `Email setting "${setting}" has been updated.`,
     });
   };
@@ -404,9 +402,9 @@ export default function AdminPage() {
       const query = queryInput?.value?.trim();
       if (!query) {
         toast({
-          title: "Error",
+          type: "error",
           description: "Please enter a search query.",
-          variant: "destructive",
+          
         });
         return;
       }
@@ -438,9 +436,9 @@ export default function AdminPage() {
       } else {
         resultsContainer.innerHTML = `<div class="text-center py-8 text-red-500">Error: ${result.error}</div>`;
         toast({
-          title: "Error",
+          type: "error",
           description: result.error || "Search failed.",
-          variant: "destructive",
+          
         });
       }
     } catch (error) {
@@ -448,9 +446,9 @@ export default function AdminPage() {
       const resultsContainer = document.getElementById('search-results') as HTMLDivElement;
       resultsContainer.innerHTML = '<div class="text-center py-8 text-red-500">Search failed. Please try again.</div>';
       toast({
-        title: "Error",
+        type: "error",
         description: "Search failed. Please try again.",
-        variant: "destructive",
+        
       });
     }
   };
@@ -963,18 +961,18 @@ export default function AdminPage() {
 
                       if (!title) {
                         toast({
-                          title: "Error",
+                          type: "error",
                           description: "Please enter a title.",
-                          variant: "destructive",
+                          
                         });
                         return;
                       }
 
                       if (!file && !text?.trim()) {
                         toast({
-                          title: "Error", 
+                          type: "error", 
                           description: "Please upload a file or enter text content.",
-                          variant: "destructive",
+                          
                         });
                         return;
                       }
@@ -1086,23 +1084,23 @@ export default function AdminPage() {
                                     const result = await response.json();
                                     if (result.success) {
                                       toast({
-                                        title: "Success",
+                                        type: "success",
                                         description: "Knowledge base entry deleted successfully.",
                                       });
                                       loadKnowledgeBase();
                                     } else {
                                       toast({
-                                        title: "Error",
+                                        type: "error",
                                         description: result.error || "Failed to delete entry.",
-                                        variant: "destructive",
+                                        
                                       });
                                     }
                                   } catch (error) {
                                     console.error('Delete error:', error);
                                     toast({
-                                      title: "Error",
+                                      type: "error",
                                       description: "Failed to delete entry. Please try again.",
-                                      variant: "destructive",
+                                      
                                     });
                                   } finally {
                                     setDeletingEntry(null);

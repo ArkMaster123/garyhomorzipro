@@ -3,11 +3,11 @@
 import { sendWelcomeEmail, sendFollowUpEmail } from '@/lib/email/transporter';
 
 // Send welcome email when user generates an idea
-export async function sendWelcomeEmailAction(userEmail: string, userName: string, ideaTitle: string) {
+export async function sendWelcomeEmailAction(userEmail: string, userName: string, ideaTitle: string, feasibilityCard?: any) {
   try {
     console.log('📧 Sending welcome email to:', userEmail, 'for idea:', ideaTitle);
     
-    const result = await sendWelcomeEmail(userEmail, userName, ideaTitle);
+    const result = await sendWelcomeEmail(userEmail, userName, ideaTitle, feasibilityCard);
     
     if (result.success) {
       console.log('✅ Welcome email sent successfully');

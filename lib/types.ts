@@ -29,6 +29,7 @@ export type ChatTools = {
   updateDocument: updateDocumentTool;
   requestSuggestions: requestSuggestionsTool;
   generateImage: InferUITool<typeof import('@/lib/ai/tools/generate-image').generateImage>;
+  enhancedWebSearch: InferUITool<typeof import('@/lib/ai/tools/enhanced-web-search').enhancedWebSearch>;
 };
 
 export type CustomUIDataTypes = {

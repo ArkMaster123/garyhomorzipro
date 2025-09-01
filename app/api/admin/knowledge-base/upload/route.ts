@@ -357,8 +357,6 @@ export async function POST(request: NextRequest) {
     const { embedding: mainEmbedding } = await embed({
       model: embeddingModelObj,
       value: content,
-      dimensions: embeddingDimensions ? parseInt(embeddingDimensions) : undefined,
-      encodingFormat: encodingFormat as 'float' | 'base64',
     });
 
     // Generate embeddings for all chunks
@@ -366,8 +364,8 @@ export async function POST(request: NextRequest) {
       model: embeddingModelObj,
       values: chunks,
       maxParallelCalls: 3, // Optimize performance
-      dimensions: embeddingDimensions ? parseInt(embeddingDimensions) : undefined,
-      encodingFormat: encodingFormat as 'float' | 'base64',
+
+
     });
 
     // Start a transaction to create the knowledge base entry and chunks
@@ -377,7 +375,7 @@ export async function POST(request: NextRequest) {
         personaId,
         title,
         content,
-        contentType: contentType || (file?.type === 'application/pdf' ? 'pdf' : 'text'),
+        contentType: (contentType || (file?.type === 'application/pdf' ? 'pdf' : 'text')) as 'pdf' | 'text' | 'markdown',
         fileUrl,
         embedding: mainEmbedding,
         metadata: {

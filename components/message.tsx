@@ -170,11 +170,11 @@ const PurePreviewMessage = ({
                         {/* Display web search sources at the bottom of assistant responses */}
                         {message.role === 'assistant' && (() => {
                           // Debug: Log all message parts to see what tools were called
-                          console.log('Message parts for source extraction:', message.parts?.map(p => ({ type: p.type, state: p.state })));
+                          console.log('Message parts for source extraction:', message.parts?.map(p => ({ type: p.type, state: 'state' in p ? p.state : 'unknown' })));
                           
                           // Extract enhanced web search results from tool calls in this message
                           const webSearchResults = message.parts
-                            ?.filter((p) => p.type === 'tool-enhancedWebSearch' && p.state === 'output-available')
+                            ?.filter((p) => p.type === 'tool-enhancedWebSearch' && 'state' in p && p.state === 'output-available')
                             .map((p) => {
                               console.log('Found enhancedWebSearch tool output:', p.output);
                               return p.output;

@@ -23,7 +23,7 @@ import {
   saveChat,
   saveMessages,
 } from '@/lib/db/queries';
-import { convertToUIMessages, generateUUID } from '@/lib/utils';
+import { convertToUIMessages, generateUUID, getTextFromMessage } from '@/lib/utils';
 import { generateTitleFromUserMessage } from '../../actions';
 import { createDocument } from '@/lib/ai/tools/create-document';
 import { updateDocument } from '@/lib/ai/tools/update-document';
@@ -212,7 +212,7 @@ When using web search results, integrate them naturally with your core business 
 
           try {
             // Extract search terms from the latest user message
-            const searchQuery = extractSearchTermsFromMessage(message.parts[0]?.text || '');
+            const searchQuery = extractSearchTermsFromMessage(getTextFromMessage(message));
             
             if (searchQuery.length > 0) {
               // Search for relevant knowledge base content
@@ -237,7 +237,7 @@ When using web search results, integrate them naturally with your core business 
         } else if (userPersona === 'rory-sutherland') {
           try {
             // Extract search terms from the latest user message
-            const searchQuery = extractSearchTermsFromMessage(message.parts[0]?.text || '');
+            const searchQuery = extractSearchTermsFromMessage(getTextFromMessage(message));
             
             if (searchQuery.length > 0) {
               // Search for relevant knowledge base content
@@ -341,7 +341,7 @@ When using web search results, integrate them naturally with your core business 
     }
   } catch (error) {
     console.error('Chat API error:', error);
-    return new ChatSDKError('internal_server_error:chat').toResponse();
+    return new ChatSDKError('bad_request:chat').toResponse();
   }
 }
 

@@ -8,6 +8,8 @@ const ideatorRequestSchema = z.object({
   title: z.string().min(3).max(100).describe('Business idea title'),
   description: z.string().min(10).max(1000).describe('Detailed description of the business idea'),
   pathway: z.enum(['free', 'advanced']).default('free').describe('Analysis tier: free (basic) or advanced (detailed)'),
+  userEmail: z.string().email().optional().describe('User email for advanced tier'),
+  userName: z.string().min(2).max(50).optional().describe('User name for personalization'),
 });
 
 // Output validation schema
@@ -70,7 +72,8 @@ export async function POST(request: Request) {
         let statistaQuery = '';
         try {
           statistaQuery = `site:statista.com ${title} market size growth 2024`;
-          statistaResults = await webSearch.execute({
+          console.log('🔍 Starting Statista search...');
+          statistaResults = await (webSearch as any).execute({
             query: statistaQuery,
             count: 5,
             freshness: 'py',
@@ -82,7 +85,8 @@ export async function POST(request: Request) {
         
         // Strategy 2: General market research
         const generalQuery = `market size growth trends ${title} ${description}`;
-        const generalResults = await webSearch.execute({
+        console.log('🔍 Starting general market research...');
+        const generalResults = await (webSearch as any).execute({
           query: generalQuery,
           count: 10,
           freshness: 'py',
@@ -229,7 +233,7 @@ Remember: Respond with ONLY the JSON object, no markdown, no explanations.`;
       model: gateway('openai/gpt-oss-120b'),
       system: systemPrompt,
       prompt: userPrompt,
-      maxTokens: 4000,
+
     });
 
     console.log('✅ AI analysis completed');
@@ -260,23 +264,22 @@ Remember: Respond with ONLY the JSON object, no markdown, no explanations.`;
       throw new Error(`Failed to parse AI response: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
 
-    // Step 4: Send welcome email for advanced tier
+    // Step 4: Send email for advanced tier users
     if (pathway === 'advanced' && userEmail && userName) {
       try {
         console.log('📧 Sending welcome email to:', userEmail);
         
-        // Import and call the Server Action
+        // Import the email action
         const { sendWelcomeEmailAction } = await import('@/app/actions/sendEmail');
-        const emailResult = await sendWelcomeEmailAction(userEmail, userName, title);
         
-        if (emailResult.success) {
-          console.log('✅ Welcome email sent successfully');
-        } else {
-          console.warn('⚠️ Welcome email failed:', emailResult.message);
-        }
+        // Send email asynchronously (don't wait for it)
+        sendWelcomeEmailAction(userEmail, userName, feasibilityCard.title, feasibilityCard).catch(error => {
+          console.warn('⚠️ Email sending failed:', error);
+        });
+        
+        console.log('✅ Email sending initiated for:', userEmail);
       } catch (error) {
-        console.error('❌ Error sending welcome email:', error);
-        // Don't fail the entire request if email fails
+        console.warn('⚠️ Email integration failed:', error);
       }
     }
 
