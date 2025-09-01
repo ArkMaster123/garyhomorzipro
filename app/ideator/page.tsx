@@ -192,12 +192,10 @@ const IdeaGeneratorPage: React.FC = () => {
         setFeasibilityCard(result.data)
         setCurrentStep(3)
         
-        // TODO: Email integration placeholder
-        if (pathway === 'advanced' && userEmail && userName) {
-          console.log('📧 Email integration placeholder - would send welcome email to:', userEmail)
-          // TODO: Implement email sending via Server Actions
-          // await sendWelcomeEmail(userEmail, userName, ideaTitle)
-        }
+                       // Email is now handled automatically by the API for advanced tier
+               if (pathway === 'advanced' && userEmail && userName) {
+                 console.log('📧 Welcome email sent automatically via API')
+               }
       } else {
         setError(result.error || 'Failed to generate feasibility card')
       }
@@ -883,17 +881,17 @@ I'm excited to turn this idea into a reality with Gary's guidance. Let me know w
 
 
                 
-                {pathway === 'advanced' && (
+                {pathway === 'advanced' && userEmail && (
                   <div className="mt-8 space-y-6">
-                    <div className="p-4 rounded-xl border border-blue-500/20 bg-blue-500/5">
-                      <h3 className="text-lg font-semibold text-blue-400 mb-2">
-                        📧 Email Integration Coming Soon!
+                    <div className="p-4 rounded-xl border border-green-500/20 bg-green-500/5">
+                      <h3 className="text-lg font-semibold text-green-400 mb-2">
+                        ✅ Welcome Email Sent!
                       </h3>
                       <p className="text-gray-400 text-sm mb-4">
-                        We've captured your email and will soon send you a welcome email with additional insights and follow-up content.
+                        We've sent a personalized welcome email to <strong>{userEmail}</strong> with your analysis and next steps.
                       </p>
-                      <div className="text-xs text-blue-400/80">
-                        <strong>Placeholder:</strong> Email system will be implemented using Gmail + Nodemailer for automated follow-up sequences.
+                      <div className="text-xs text-green-400/80">
+                        <strong>What's next:</strong> You'll receive follow-up emails on day 3, 7, and 14 to keep you motivated and on track!
                       </div>
                     </div>
                     

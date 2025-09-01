@@ -55,7 +55,7 @@ export async function POST(request: Request) {
   try {
     // Parse and validate request
     const body = await request.json();
-    const { title, description, pathway } = ideatorRequestSchema.parse(body);
+    const { title, description, pathway, userEmail, userName } = ideatorRequestSchema.parse(body);
 
     console.log('🚀 Ideator request:', { title, description, pathway });
 
@@ -260,7 +260,27 @@ Remember: Respond with ONLY the JSON object, no markdown, no explanations.`;
       throw new Error(`Failed to parse AI response: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
 
-    // Step 4: Return success response
+    // Step 4: Send welcome email for advanced tier
+    if (pathway === 'advanced' && userEmail && userName) {
+      try {
+        console.log('📧 Sending welcome email to:', userEmail);
+        
+        // Import and call the Server Action
+        const { sendWelcomeEmailAction } = await import('@/app/actions/sendEmail');
+        const emailResult = await sendWelcomeEmailAction(userEmail, userName, title);
+        
+        if (emailResult.success) {
+          console.log('✅ Welcome email sent successfully');
+        } else {
+          console.warn('⚠️ Welcome email failed:', emailResult.message);
+        }
+      } catch (error) {
+        console.error('❌ Error sending welcome email:', error);
+        // Don't fail the entire request if email fails
+      }
+    }
+
+    // Step 5: Return success response
     return Response.json({
       success: true,
       data: feasibilityCard,
