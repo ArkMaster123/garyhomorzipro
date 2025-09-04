@@ -9,6 +9,7 @@ import {
   MonitorPlay, Database, Wrench, Bot, 
   BrainCircuit, Target, BarChart3, Moon, Sun, Star
 } from 'lucide-react'
+import { UnifiedAuthButton } from '@/components/unified-auth-button'
 
 // Utility function for gradient text
 const GradientText: React.FC<{ children: React.ReactNode; className?: string }> = ({ 
@@ -263,9 +264,7 @@ const LandingPage: React.FC = () => {
                   )}
                   <span className="sr-only">Toggle theme</span>
                 </button>
-                <button className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors light:bg-[#1E293B] light:text-white">
-                  Sign in
-                </button>
+                <UnifiedAuthButton />
               </div>
               
               <button className="md:hidden" onClick={() => setIsMenuOpen(!isMenuOpen)}>
@@ -297,9 +296,9 @@ const LandingPage: React.FC = () => {
                     )}
                     <span className="sr-only">Toggle theme</span>
                   </button>
-                  <button className="w-full px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors light:bg-[#1E293B] light:text-white">
-                    Sign in
-                  </button>
+                  <div className="flex justify-center">
+                    <UnifiedAuthButton />
+                  </div>
                 </div>
               </motion.div>
             )}

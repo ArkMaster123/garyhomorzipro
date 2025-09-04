@@ -2,14 +2,15 @@ import { Toaster } from 'sonner';
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { ThemeProvider } from '@/components/theme-provider';
+import { ClerkProvider } from '@clerk/nextjs';
 
 import './globals.css';
 import { SessionProvider } from 'next-auth/react';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://chat.vercel.ai'),
-  title: 'Next.js Chatbot Template',
-  description: 'Next.js chatbot template using the AI SDK.',
+  title: 'Gary Experience',
+  description: 'Gary Hormozi Pro - AI-powered business coaching and insights.',
 };
 
 export const viewport = {
@@ -71,15 +72,17 @@ export default async function RootLayout({
         />
       </head>
       <body className="antialiased">
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <Toaster position="top-center" />
-          <SessionProvider>{children}</SessionProvider>
-        </ThemeProvider>
+        <ClerkProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <Toaster position="top-center" />
+            <SessionProvider>{children}</SessionProvider>
+          </ThemeProvider>
+        </ClerkProvider>
       </body>
     </html>
   );
