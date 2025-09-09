@@ -4,6 +4,10 @@ export const authConfig = {
   pages: {
     signIn: '/login',
     newUser: '/',
+    error: '/login',
+    verifyRequest: '/verify-request',
+    forgotPassword: '/forgot-password',
+    resetPassword: '/reset-password',
   },
   providers: [
     // added later in auth.ts since it requires bcrypt which is only compatible with Node.js

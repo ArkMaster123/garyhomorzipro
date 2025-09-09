@@ -35,6 +35,7 @@ import { generateImage } from '@/lib/ai/tools/generate-image';
 import { isProductionEnvironment } from '@/lib/constants';
 import { myProvider, createDynamicModel } from '@/lib/ai/providers';
 import { entitlementsByUserType } from '@/lib/ai/entitlements';
+import { checkMessageLimit, recordMessage } from '@/lib/message-limits';
 import { postRequestBodySchema, type PostRequestBody } from './schema';
 import { geolocation } from '@vercel/functions';
 import {
@@ -107,13 +108,22 @@ export async function POST(request: Request) {
 
     const userType: UserType = session.user.type;
 
-    const messageCount = await getMessageCountByUserId({
-      id: session.user.id,
-      differenceInHours: 24,
-    });
-
-    if (messageCount > entitlementsByUserType[userType].maxMessagesPerDay) {
-      return new ChatSDKError('rate_limit:chat').toResponse();
+    // Check Stripe-based message limits
+    const limitCheck = await checkMessageLimit(session.user.id);
+    
+    if (!limitCheck.canSend) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Message limit reached',
+          limitReached: true,
+          remainingMessages: limitCheck.remainingMessages,
+          isSubscriber: limitCheck.isSubscriber
+        }), 
+        { 
+          status: 429,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
     }
 
     const chat = await getChatById({ id });
@@ -322,6 +332,9 @@ When using web search results, integrate them naturally with your core business 
             chatId: id,
           })),
         });
+        
+        // Record the message for Stripe-based limits
+        await recordMessage(session.user.id);
       },
       onError: () => {
         return 'Oops, an error occurred!';

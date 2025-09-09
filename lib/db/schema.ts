@@ -23,6 +23,15 @@ export const user = pgTable('User', {
   name: varchar('name', { length: 128 }), // User's display name
   image: text('image'), // User's profile image URL
   createdAt: timestamp('createdAt').notNull().defaultNow(),
+  
+  // Stripe subscription fields
+  stripeCustomerId: varchar('stripeCustomerId', { length: 128 }),
+  isSubscriber: boolean('isSubscriber').notNull().default(false),
+  subscriptionStatus: varchar('subscriptionStatus', { length: 32 }).default('inactive'),
+  subscriptionId: varchar('subscriptionId', { length: 128 }),
+  subscriptionEndDate: timestamp('subscriptionEndDate'),
+  dailyMessageCount: integer('dailyMessageCount').notNull().default(0),
+  lastMessageResetDate: timestamp('lastMessageResetDate').defaultNow(),
 });
 
 export type User = InferSelectModel<typeof user>;
