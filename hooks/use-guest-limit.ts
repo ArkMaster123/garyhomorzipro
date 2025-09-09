@@ -1,16 +1,19 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useUser } from '@clerk/nextjs'
+import { useSession } from 'next-auth/react'
 
 const GUEST_MESSAGE_LIMIT = 20
 const STORAGE_KEY = 'guest_message_count'
 
 export function useGuestLimit() {
-  const { isSignedIn, isLoaded } = useUser()
+  const { data: session, status } = useSession()
   const [messageCount, setMessageCount] = useState(0)
   const [showSignupPopup, setShowSignupPopup] = useState(false)
   const [isClient, setIsClient] = useState(false)
+
+  const isSignedIn = !!session?.user
+  const isLoaded = status !== 'loading'
 
   useEffect(() => {
     setIsClient(true)

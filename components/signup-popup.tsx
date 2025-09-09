@@ -1,10 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { SignInButton, SignUpButton } from '@clerk/nextjs'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { X, MessageSquare, Zap } from 'lucide-react'
+import Link from 'next/link'
 
 interface SignupPopupProps {
   isOpen: boolean
@@ -67,20 +67,20 @@ export function SignupPopup({ isOpen, onClose, remainingMessages }: SignupPopupP
           </div>
 
           <div className="flex flex-col gap-2">
-            <SignUpButton mode="modal">
+            <Link href="/register">
               <Button 
                 className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                 onClick={() => setIsSigningUp(true)}
               >
                 Create Free Account
               </Button>
-            </SignUpButton>
+            </Link>
             
-            <SignInButton mode="modal">
+            <Link href="/login">
               <Button variant="outline" className="w-full">
                 Already have an account? Sign In
               </Button>
-            </SignInButton>
+            </Link>
           </div>
 
           <p className="text-xs text-center text-muted-foreground">
