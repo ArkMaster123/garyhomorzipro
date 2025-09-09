@@ -12,7 +12,7 @@
 ### **Environment Variables:**
 - ✅ **STRIPE_SECRET_KEY**: `sk_test_51PDkeJJ7vSMIQ4Rh...`
 - ✅ **NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY**: `pk_test_51PDkeJJ7vSMIQ4Rh...`
-- ✅ **STRIPE_WEBHOOK_SECRET**: `whsec_FHiui8E1ksgKZe6z6ybiaS16v1tToc25`
+- ✅ **STRIPE_WEBHOOK_SECRET**: `whsec_***REDACTED***`
 
 ### **Webhook Configuration:**
 - ✅ **Webhook ID**: `we_1QKpoYJ7vSMIQ4RhTxDd6knR`
@@ -61,7 +61,7 @@ http://localhost:3000/subscription
 ```bash
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_51PDkeJJ7vSMIQ4Rh...
 STRIPE_SECRET_KEY=sk_test_51PDkeJJ7vSMIQ4Rh...
-STRIPE_WEBHOOK_SECRET=whsec_FHiui8E1ksgKZe6z6ybiaS16v1tToc25
+STRIPE_WEBHOOK_SECRET=whsec_***REDACTED***
 ```
 
 ### **Webhook Endpoint:**

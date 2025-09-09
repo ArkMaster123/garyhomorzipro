@@ -19,7 +19,6 @@ export const user = pgTable('User', {
   email: varchar('email', { length: 64 }).notNull(),
   password: varchar('password', { length: 64 }),
   persona: varchar('persona', { length: 32 }).default('default'),
-  clerkId: varchar('clerkId', { length: 128 }), // Clerk user ID for authentication
   name: varchar('name', { length: 128 }), // User's display name
   image: text('image'), // User's profile image URL
   createdAt: timestamp('createdAt').notNull().defaultNow(),
