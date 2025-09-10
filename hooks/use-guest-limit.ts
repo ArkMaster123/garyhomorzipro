@@ -12,7 +12,7 @@ export function useGuestLimit() {
   const [showSignupPopup, setShowSignupPopup] = useState(false)
   const [isClient, setIsClient] = useState(false)
 
-  const isSignedIn = !!session?.user
+  const isSignedIn = !!session
   const isLoaded = status !== 'loading'
 
   useEffect(() => {

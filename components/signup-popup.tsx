@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { signIn } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { X, MessageSquare, Zap } from 'lucide-react'
@@ -67,7 +68,7 @@ export function SignupPopup({ isOpen, onClose, remainingMessages }: SignupPopupP
           </div>
 
           <div className="flex flex-col gap-2">
-            <Link href="/register">
+            <Link href="/sign-up">
               <Button 
                 className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
                 onClick={() => setIsSigningUp(true)}
@@ -76,7 +77,7 @@ export function SignupPopup({ isOpen, onClose, remainingMessages }: SignupPopupP
               </Button>
             </Link>
             
-            <Link href="/login">
+            <Link href="/sign-in">
               <Button variant="outline" className="w-full">
                 Already have an account? Sign In
               </Button>
