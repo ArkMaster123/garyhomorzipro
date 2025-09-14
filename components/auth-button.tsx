@@ -4,7 +4,7 @@ import { useSession, signOut } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 
-export function ClerkAuthButton() {
+export function AuthButton() {
   const { data: session, status } = useSession()
 
   if (status === 'loading') {

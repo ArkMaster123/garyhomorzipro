@@ -48,7 +48,13 @@ export const enhancedWebSearch = tool({
     const apiKey = process.env.BRAVE_SEARCH_API_KEY;
     
     if (!apiKey) {
-      throw new Error('BRAVE_SEARCH_API_KEY environment variable is not set');
+      console.warn('BRAVE_SEARCH_API_KEY not set, skipping web search');
+      return {
+        error: 'Web search unavailable - API key not configured',
+        query: enhancedQuery,
+        focus,
+        timeframe
+      };
     }
 
     // Enhance query based on focus area and Gary Hormozi's interests

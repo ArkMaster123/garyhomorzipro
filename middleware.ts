@@ -13,6 +13,7 @@ export async function middleware(request: NextRequest) {
     return new Response('pong', { status: 200 });
   }
 
+  // Skip middleware for API routes and auth pages
   if (pathname.startsWith('/api/auth') || pathname.startsWith('/api/models') || pathname.startsWith('/api/ideator') || pathname.startsWith('/api/admin') || pathname === '/ideator' || pathname === '/admin') {
     return NextResponse.next();
   }
@@ -23,17 +24,18 @@ export async function middleware(request: NextRequest) {
     secureCookie: !isDevelopmentEnvironment,
   });
 
-  if (!token) {
-    const redirectUrl = encodeURIComponent(request.url);
-
-    return NextResponse.redirect(
-      new URL(`/api/auth/guest?redirectUrl=${redirectUrl}`, request.url),
-    );
+  // Allow guest access to main pages and chat
+  if (!token && (pathname === '/' || pathname.startsWith('/chat'))) {
+    return NextResponse.next();
   }
 
-  const isGuest = guestRegex.test(token?.email ?? '');
+  // Redirect unauthenticated users to sign-in for protected routes
+  if (!token && !pathname.startsWith('/sign-in') && !pathname.startsWith('/sign-up') && !pathname.startsWith('/guest-signin')) {
+    return NextResponse.redirect(new URL('/sign-in', request.url));
+  }
 
-  if (token && !isGuest && ['/login', '/register'].includes(pathname)) {
+  // Redirect authenticated users away from auth pages
+  if (token && (pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up'))) {
     return NextResponse.redirect(new URL('/', request.url));
   }
 

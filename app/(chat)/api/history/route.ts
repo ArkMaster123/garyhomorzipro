@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
   }
 
   const chats = await getChatsByUserId({
-    id: session.user.id,
+    id: String(session.user.id),
     limit,
     startingAfter,
     endingBefore,

@@ -16,11 +16,19 @@ export async function getUserSubscriptionStatus(userId: string) {
 }
 
 export async function incrementMessageCount(userId: string) {
-  await db.update(user)
-    .set({
-      dailyMessageCount: user.dailyMessageCount + 1,
-    })
+  const [userData] = await db.select({
+    dailyMessageCount: user.dailyMessageCount,
+  })
+    .from(user)
     .where(eq(user.id, userId))
+
+  if (userData) {
+    await db.update(user)
+      .set({
+        dailyMessageCount: userData.dailyMessageCount + 1,
+      })
+      .where(eq(user.id, userId))
+  }
 }
 
 export async function resetDailyMessageCount(userId: string) {

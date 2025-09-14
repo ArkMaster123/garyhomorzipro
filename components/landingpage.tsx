@@ -322,7 +322,7 @@ const LandingPage: React.FC = () => {
                   Expert advice on sales, marketing, and business growth - powered by AI
                 </p>
                 <button 
-                  onClick={() => window.location.href = '/api/auth/guest?redirectUrl=/chat'}
+                  onClick={() => window.location.href = '/chat'}
                   className="px-8 py-4 rounded-lg bg-gradient-to-r from-blue-500 to-teal-500 hover:from-blue-600 hover:to-teal-600 transition-all text-white font-semibold flex items-center light:text-white cursor-pointer"
                 >
                   Start Chatting <ArrowRight className="ml-2" />
@@ -868,7 +868,7 @@ const LandingPage: React.FC = () => {
                   </ul>
 
                   <button 
-                    onClick={() => window.location.href = '/api/auth/guest?redirectUrl=/chat'}
+                    onClick={() => window.location.href = '/chat'}
                     className={`w-full py-3 rounded-lg ${
                       plan.isPopular
                         ? 'bg-gradient-to-r from-blue-500 to-teal-500 hover:from-blue-600 hover:to-teal-600 text-white'

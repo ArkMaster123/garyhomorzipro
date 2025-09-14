@@ -55,6 +55,26 @@ export function SubscriptionStatus({ userId }: SubscriptionStatusProps) {
     }
   }
 
+  const handleManageSubscription = async () => {
+    try {
+      const response = await fetch('/api/create-portal-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      
+      if (response.ok) {
+        const { url } = await response.json();
+        window.location.href = url;
+      } else {
+        console.error('Failed to create portal session');
+        alert('Failed to open subscription management. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error creating portal session:', error);
+      alert('Failed to open subscription management. Please try again.');
+    }
+  }
+
   if (loading) {
     return <div>Loading subscription status...</div>
   }
@@ -106,7 +126,7 @@ export function SubscriptionStatus({ userId }: SubscriptionStatusProps) {
             <>
               <Button 
                 variant="outline" 
-                onClick={() => window.open(process.env.NEXT_PUBLIC_MANAGE_SUBSCRIPTION_LINK, '_blank')}
+                onClick={handleManageSubscription}
                 className="flex-1"
               >
                 Manage Subscription

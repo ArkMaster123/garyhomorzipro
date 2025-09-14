@@ -33,7 +33,13 @@ export const webSearch = tool({
     const apiKey = process.env.BRAVE_SEARCH_API_KEY;
     
     if (!apiKey) {
-      throw new Error('BRAVE_SEARCH_API_KEY environment variable is not set');
+      console.warn('BRAVE_SEARCH_API_KEY not set, skipping web search');
+      return {
+        error: 'Web search unavailable - API key not configured',
+        query,
+        web_results: [],
+        total_results: 0
+      };
     }
 
     // Build query parameters - filter out undefined values

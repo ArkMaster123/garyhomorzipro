@@ -363,9 +363,24 @@ function SubscriptionSection({ subscriptionStatus }: { subscriptionStatus: Subsc
     }
   };
 
-  const handleManageSubscription = () => {
-    // This would typically open Stripe's customer portal
-    window.open('https://billing.stripe.com/p/login/test_123', '_blank');
+  const handleManageSubscription = async () => {
+    try {
+      const response = await fetch('/api/create-portal-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      
+      if (response.ok) {
+        const { url } = await response.json();
+        window.location.href = url;
+      } else {
+        console.error('Failed to create portal session');
+        alert('Failed to open subscription management. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error creating portal session:', error);
+      alert('Failed to open subscription management. Please try again.');
+    }
   };
 
   if (!subscriptionStatus) {

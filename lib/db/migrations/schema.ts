@@ -35,10 +35,57 @@ export const user = pgTable("User", {
 	email: varchar({ length: 64 }).notNull(),
 	password: varchar({ length: 64 }),
 	persona: varchar({ length: 32 }).default('default'),
-	clerkId: varchar({ length: 128 }),
 	name: varchar({ length: 128 }),
 	image: text(),
+	emailVerified: timestamp({ mode: 'string' }),
 	createdAt: timestamp({ mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().notNull(),
+});
+
+// NextAuth tables
+export const account = pgTable("Account", {
+	id: text().primaryKey().notNull(),
+	userId: uuid().notNull().references(() => user.id, { onDelete: "cascade" }),
+	type: text().notNull(),
+	provider: text().notNull(),
+	providerAccountId: text().notNull(),
+	refresh_token: text(),
+	access_token: text(),
+	expires_at: integer(),
+	token_type: text(),
+	scope: text(),
+	id_token: text(),
+	session_state: text(),
+});
+
+export const session = pgTable("Session", {
+	id: text().primaryKey().notNull(),
+	sessionToken: text().notNull().unique(),
+	userId: uuid().notNull().references(() => user.id, { onDelete: "cascade" }),
+	expires: timestamp({ mode: 'string' }).notNull(),
+});
+
+export const verificationToken = pgTable("VerificationToken", {
+	identifier: text().notNull(),
+	token: text().notNull(),
+	expires: timestamp({ mode: 'string' }).notNull(),
+}, (vt) => ({
+	compoundKey: primaryKey({ columns: [vt.identifier, vt.token] }),
+}));
+
+// Invite table for email invite system
+export const invite = pgTable("Invite", {
+	id: uuid().defaultRandom().primaryKey().notNull(),
+	code: varchar({ length: 255 }).notNull().unique(),
+	email: varchar({ length: 255 }).notNull(),
+	invitedBy: uuid().notNull().references(() => user.id, { onDelete: "cascade" }),
+	used: boolean().default(false).notNull(),
+	usedAt: timestamp({ mode: 'string' }),
+	expiresAt: timestamp({ mode: 'string' }).notNull(),
+	maxUses: integer().default(1).notNull(),
+	usageCount: integer().default(0).notNull(),
+	createdAt: timestamp({ mode: 'string' }).defaultNow().notNull(),
+	updatedAt: timestamp({ mode: 'string' }).defaultNow().notNull(),
 });
 
 export const message = pgTable("Message", {
