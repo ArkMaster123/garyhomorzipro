@@ -55,7 +55,10 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico, sitemap.xml, robots.txt (metadata files)
+     * - video files (.mp4, .webm, .ogg)
+     * - image files (.png, .jpg, .jpeg, .gif, .webp, .svg)
+     * - other static assets
      */
-    '/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)',
+    '/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|.*\\.(?:mp4|webm|ogg|png|jpg|jpeg|gif|webp|svg|ico|woff|woff2|ttf|eot)).*)',
   ],
 };
