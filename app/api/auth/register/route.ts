@@ -3,6 +3,7 @@ import { db } from '@/lib/db'
 import { user } from '@/lib/db/schema'
 import * as bcrypt from 'bcrypt-ts'
 import { eq } from 'drizzle-orm'
+import { sendRegistrationWelcomeEmail } from '@/lib/email/welcome-email'
 
 export async function POST(request: NextRequest) {
   try {
@@ -55,6 +56,11 @@ export async function POST(request: NextRequest) {
       .returning()
 
     // Note: Invite code usage tracking removed for now
+
+    // Send welcome email (asynchronously, don't wait for it)
+    sendRegistrationWelcomeEmail(email, name).catch(error => {
+      console.warn('⚠️ Welcome email failed to send:', error);
+    });
 
     return NextResponse.json(
       { 
