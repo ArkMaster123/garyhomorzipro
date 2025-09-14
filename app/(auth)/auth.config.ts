@@ -24,7 +24,7 @@ export const authConfig = {
 
       // Redirect authenticated users away from auth pages
       if (isLoggedIn && (isOnLogin || isOnRegister || isOnSignIn || isOnSignUp)) {
-        return Response.redirect(new URL('/', nextUrl));
+        return Response.redirect(new URL('/chat', nextUrl));
       }
 
       // Always allow access to auth pages
