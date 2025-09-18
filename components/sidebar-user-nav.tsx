@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronUp, CreditCard, User, Crown } from 'lucide-react';
+import { ChevronUp, CreditCard, User as UserIcon, Crown } from 'lucide-react';
 import Image from 'next/image';
 import type { User } from 'next-auth';
 import { signOut, useSession } from 'next-auth/react';
@@ -76,7 +76,7 @@ export function SidebarUserNav({ user }: { user: User }) {
               className="cursor-pointer"
               onSelect={() => router.push('/profile')}
             >
-              <User className="mr-2 h-4 w-4" />
+              <UserIcon className="mr-2 h-4 w-4" />
               My Profile & Subscription
             </DropdownMenuItem>
             
