@@ -12,9 +12,24 @@ export async function POST(req: Request) {
   }
 
   try {
+    // First, find or create a customer
+    const customers = await stripe.customers.list({
+      email: session.user.email,
+      limit: 1,
+    })
+    
+    let customer
+    if (customers.data.length > 0) {
+      customer = customers.data[0]
+    } else {
+      customer = await stripe.customers.create({
+        email: session.user.email,
+      })
+    }
+
     // Create a Stripe customer portal session
     const portalSession = await stripe.billingPortal.sessions.create({
-      customer_email: session.user.email,
+      customer: customer.id,
       return_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/profile`,
     })
 
