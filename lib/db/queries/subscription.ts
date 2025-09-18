@@ -52,7 +52,7 @@ export async function checkAndResetMessageCount(userId: string) {
   if (!userData) return false
 
   const now = new Date()
-  const lastReset = new Date(userData.lastMessageResetDate)
+  const lastReset = userData.lastMessageResetDate ? new Date(userData.lastMessageResetDate) : new Date(0)
   const isNewDay = now.toDateString() !== lastReset.toDateString()
 
   if (isNewDay) {
