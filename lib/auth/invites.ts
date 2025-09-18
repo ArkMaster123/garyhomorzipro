@@ -141,6 +141,7 @@ export async function cleanupExpiredInvites(): Promise<number> {
         )
       )
     )
+    .returning({ id: invite.id })
 
-  return result.rowCount || 0
+  return result.length || 0
 }
