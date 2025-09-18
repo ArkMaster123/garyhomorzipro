@@ -8,6 +8,11 @@ import {
 } from 'ai';
 import { auth, type UserType } from '@/app/(auth)/auth';
 import { type RequestHints, systemPrompt } from '@/lib/ai/prompts';
+import { 
+  searchKnowledgeBase, 
+  enhancePersonaPromptWithKnowledge, 
+  extractSearchTermsFromMessage 
+} from '@/lib/ai/knowledge-base';
 import {
   createStreamId,
   deleteChatById,
@@ -18,17 +23,19 @@ import {
   saveChat,
   saveMessages,
 } from '@/lib/db/queries';
-import { convertToUIMessages, generateUUID } from '@/lib/utils';
+import { convertToUIMessages, generateUUID, getTextFromMessage } from '@/lib/utils';
 import { generateTitleFromUserMessage } from '../../actions';
 import { createDocument } from '@/lib/ai/tools/create-document';
 import { updateDocument } from '@/lib/ai/tools/update-document';
 import { requestSuggestions } from '@/lib/ai/tools/request-suggestions';
 import { getWeather } from '@/lib/ai/tools/get-weather';
 import { webSearch } from '@/lib/ai/tools/web-search';
+import { enhancedWebSearch } from '@/lib/ai/tools/enhanced-web-search';
 import { generateImage } from '@/lib/ai/tools/generate-image';
 import { isProductionEnvironment } from '@/lib/constants';
 import { myProvider, createDynamicModel } from '@/lib/ai/providers';
 import { entitlementsByUserType } from '@/lib/ai/entitlements';
+import { checkMessageLimit, recordMessage } from '@/lib/message-limits';
 import { postRequestBodySchema, type PostRequestBody } from './schema';
 import { geolocation } from '@vercel/functions';
 import {
@@ -101,13 +108,22 @@ export async function POST(request: Request) {
 
     const userType: UserType = session.user.type;
 
-    const messageCount = await getMessageCountByUserId({
-      id: session.user.id,
-      differenceInHours: 24,
-    });
-
-    if (messageCount > entitlementsByUserType[userType].maxMessagesPerDay) {
-      return new ChatSDKError('rate_limit:chat').toResponse();
+    // Check Stripe-based message limits
+    const limitCheck = await checkMessageLimit(session.user.id);
+    
+    if (!limitCheck.canSend) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Message limit reached',
+          limitReached: true,
+          remainingMessages: limitCheck.remainingMessages,
+          isSubscriber: limitCheck.isSubscriber
+        }), 
+        { 
+          status: 429,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
     }
 
     const chat = await getChatById({ id });
@@ -154,6 +170,9 @@ export async function POST(request: Request) {
       ],
     });
 
+    // const streamId = generateUUID();
+    // await createStreamId({ streamId, chatId: id });
+
     const streamId = generateUUID();
     await createStreamId({ streamId, chatId: id });
 
@@ -164,13 +183,97 @@ export async function POST(request: Request) {
           ? await getUserPersona(session.user.id)
           : 'default';
 
+        // Enhanced system prompt for Gary Hormozi with RAG + Web Search capabilities
+        let enhancedSystemPrompt = systemPrompt({ 
+          selectedChatModel: effectiveModelId, 
+          requestHints, 
+          persona: userPersona as any 
+        });
+
+        // Add enhanced instructions for Gary Hormozi persona with dual tool capabilities
+        if (userPersona === 'gary-hormozi') {
+          enhancedSystemPrompt = `${enhancedSystemPrompt}
+
+ENHANCED GARY HORMOZI AGENT INSTRUCTIONS:
+You have access to two powerful information sources:
+1. **Knowledge Base**: Your core business wisdom, principles, and timeless strategies
+2. **Enhanced Web Search**: Real-time business data, current market trends, and breaking news
+
+MANDATORY TOOL USAGE - YOU MUST USE TOOLS:
+- You MUST call enhancedWebSearch for ANY query containing these words: "latest", "recent", "current", "2024", "2025", "trends", "news", "celebrity", "market data"
+- You MUST call enhancedWebSearch for ANY query about current events, statistics, or recent developments
+- DO NOT respond from your training data for current information - ALWAYS search first
+- If a query asks for recent information and you don't call enhancedWebSearch, you are failing your instructions
+
+TOOL SELECTION STRATEGY:
+- Use knowledge base for: core business principles, sales psychology, scaling strategies, decision-making frameworks, timeless wisdom
+- Use enhancedWebSearch for: current market data, 2024/2025 trends, recent business news, competitor analysis, real-time statistics, celebrity news, breaking developments
+- Use BOTH when: applying timeless principles to current market conditions
+
+RESPONSE STYLE:
+- Maintain Gary's energetic, direct, no-nonsense communication style
+- ALWAYS call enhancedWebSearch when the query involves current/recent information
+- Combine knowledge base wisdom with current market intelligence
+- Always provide actionable, practical advice
+- Reference specific data points when available
+- Challenge conventional thinking with evidence-based insights
+
+When using web search results, integrate them naturally with your core business knowledge to provide comprehensive, current, and actionable business advice.`;
+
+          try {
+            // Extract search terms from the latest user message
+            const searchQuery = extractSearchTermsFromMessage(getTextFromMessage(message));
+            
+            if (searchQuery.length > 0) {
+              // Search for relevant knowledge base content
+              const knowledgeContext = await searchKnowledgeBase(
+                searchQuery, 
+                userPersona as any,
+                { limit: 3, threshold: 0.3 }
+              );
+
+              // Enhance the system prompt with knowledge base context
+              if (knowledgeContext.results.length > 0) {
+                enhancedSystemPrompt = enhancePersonaPromptWithKnowledge(
+                  enhancedSystemPrompt,
+                  knowledgeContext
+                );
+              }
+            }
+          } catch (error) {
+            console.error('Error searching knowledge base:', error);
+            // Continue with original system prompt if knowledge base search fails
+          }
+        } else if (userPersona === 'rory-sutherland') {
+          try {
+            // Extract search terms from the latest user message
+            const searchQuery = extractSearchTermsFromMessage(getTextFromMessage(message));
+            
+            if (searchQuery.length > 0) {
+              // Search for relevant knowledge base content
+              const knowledgeContext = await searchKnowledgeBase(
+                searchQuery, 
+                userPersona as any,
+                { limit: 3, threshold: 0.3 }
+              );
+
+              // Enhance the system prompt with knowledge base context
+              if (knowledgeContext.results.length > 0) {
+                enhancedSystemPrompt = enhancePersonaPromptWithKnowledge(
+                  enhancedSystemPrompt,
+                  knowledgeContext
+                );
+              }
+            }
+          } catch (error) {
+            console.error('Error searching knowledge base:', error);
+            // Continue with original system prompt if knowledge base search fails
+          }
+        }
+
         const result = streamText({
           model: createDynamicModel(effectiveModelId),
-          system: systemPrompt({ 
-            selectedChatModel: effectiveModelId, 
-            requestHints, 
-            persona: userPersona as any 
-          }),
+          system: enhancedSystemPrompt,
           messages: convertToModelMessages(uiMessages),
           stopWhen: stepCountIs(5),
           experimental_activeTools:
@@ -178,7 +281,8 @@ export async function POST(request: Request) {
               ? []
               : [
                   'getWeather',
-                  'webSearch',
+                  // 'webSearch', // Disabled - using enhancedWebSearch instead
+                  'enhancedWebSearch',
                   'createDocument',
                   'updateDocument',
                   'requestSuggestions',
@@ -187,7 +291,8 @@ export async function POST(request: Request) {
           experimental_transform: smoothStream({ chunking: 'word' }),
           tools: {
             getWeather,
-            webSearch,
+            // webSearch, // Disabled - using enhancedWebSearch instead
+            enhancedWebSearch,
             createDocument: createDocument({ session, dataStream }),
             updateDocument: updateDocument({ session, dataStream }),
             requestSuggestions: requestSuggestions({
@@ -227,6 +332,9 @@ export async function POST(request: Request) {
             chatId: id,
           })),
         });
+        
+        // Record the message for Stripe-based limits
+        await recordMessage(session.user.id);
       },
       onError: () => {
         return 'Oops, an error occurred!';
@@ -245,9 +353,8 @@ export async function POST(request: Request) {
       return new Response(stream.pipeThrough(new JsonToSseTransformStream()));
     }
   } catch (error) {
-    if (error instanceof ChatSDKError) {
-      return error.toResponse();
-    }
+    console.error('Chat API error:', error);
+    return new ChatSDKError('bad_request:chat').toResponse();
   }
 }
 

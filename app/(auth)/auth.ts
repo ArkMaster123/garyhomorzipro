@@ -41,6 +41,13 @@ export const {
     Credentials({
       credentials: {},
       async authorize({ email, password }: any) {
+        // Handle guest authentication
+        if (email === 'guest' && password === 'guest') {
+          const [guestUser] = await createGuestUser();
+          return { ...guestUser, type: 'guest' };
+        }
+
+        // Handle regular user authentication
         const users = await getUser(email);
 
         if (users.length === 0) {
@@ -60,14 +67,6 @@ export const {
         if (!passwordsMatch) return null;
 
         return { ...user, type: 'regular' };
-      },
-    }),
-    Credentials({
-      id: 'guest',
-      credentials: {},
-      async authorize() {
-        const [guestUser] = await createGuestUser();
-        return { ...guestUser, type: 'guest' };
       },
     }),
   ],

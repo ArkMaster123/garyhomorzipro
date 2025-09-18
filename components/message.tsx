@@ -166,6 +166,79 @@ const PurePreviewMessage = ({
                         })}
                       >
                         <Markdown>{sanitizeText(part.text)}</Markdown>
+                        
+                        {/* Display web search sources at the bottom of assistant responses */}
+                        {message.role === 'assistant' && (() => {
+                          // Debug: Log all message parts to see what tools were called
+                          console.log('Message parts for source extraction:', message.parts?.map(p => ({ type: p.type, state: 'state' in p ? p.state : 'unknown' })));
+                          
+                          // Extract enhanced web search results from tool calls in this message
+                          const webSearchResults = message.parts
+                            ?.filter((p) => p.type === 'tool-enhancedWebSearch' && 'state' in p && p.state === 'output-available')
+                            .map((p) => {
+                              console.log('Found enhancedWebSearch tool output:', p.output);
+                              return p.output;
+                            })
+                            .filter((output) => output && output.results && output.results.length > 0);
+                          
+                          console.log('Extracted web search results:', webSearchResults);
+                          
+                          if (!webSearchResults || webSearchResults.length === 0) {
+                            return null;
+                          }
+                          
+                          // Flatten all search results
+                          const allSources = webSearchResults.flatMap((result) => result.results || []);
+                          
+                          if (allSources.length === 0) {
+                            return null;
+                          }
+                          
+                          return (
+                            <div className="mt-4 pt-3 border-t border-white/10 dark:border-white/5">
+                              <div className="flex items-center gap-2 text-muted-foreground text-xs font-medium mb-2">
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                                </svg>
+                                Sources ({allSources.length})
+                              </div>
+                              <div className="space-y-1">
+                                {allSources.slice(0, 5).map((source: any, index: number) => (
+                                  <div key={index} className="flex items-center gap-2 text-xs">
+                                    <span className="text-muted-foreground">[{index + 1}]</span>
+                                    <a 
+                                      href={source.url} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="text-blue-600 dark:text-blue-400 hover:underline flex-1 truncate"
+                                      title={source.title}
+                                    >
+                                      {source.title}
+                                    </a>
+                                    <span className="text-muted-foreground text-xs">
+                                      {source.domain || new URL(source.url).hostname.replace('www.', '')}
+                                    </span>
+                                    <a 
+                                      href={source.url} 
+                                      target="_blank" 
+                                      rel="noopener noreferrer"
+                                      className="text-muted-foreground hover:text-blue-600 dark:hover:text-blue-400"
+                                    >
+                                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                      </svg>
+                                    </a>
+                                  </div>
+                                ))}
+                                {allSources.length > 5 && (
+                                  <div className="text-xs text-muted-foreground">
+                                    + {allSources.length - 5} more sources
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
                   );
@@ -607,6 +680,40 @@ const PurePreviewMessage = ({
                       No image was generated. Please try again.
                     </div>
                   );
+                }
+              }
+
+              if (type === 'tool-enhancedWebSearch') {
+                const { toolCallId, state } = part;
+
+                if (state === 'input-available') {
+                  const { input } = part;
+                  return (
+                    <div key={toolCallId} className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-2">
+                      <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300 text-xs font-medium">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        Searching for current information...
+                      </div>
+                    </div>
+                  );
+                }
+
+                if (state === 'output-available') {
+                  const { output } = part;
+                  
+                  if (output.error) {
+                    return (
+                      <div key={toolCallId} className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg p-2">
+                        <div className="text-xs text-red-600 dark:text-red-400">Search error: {output.error}</div>
+                      </div>
+                    );
+                  }
+
+                  // Store search results in a global variable or context for later display
+                  // This will be picked up by the text response handler
+                  return null; // Don't display sources here - they'll appear after Gary's response
                 }
               }
             })}

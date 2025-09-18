@@ -20,10 +20,6 @@ export async function GET(request: Request) {
 
   const session = await auth();
 
-  if (!session?.user) {
-    return new ChatSDKError('unauthorized:document').toResponse();
-  }
-
   const documents = await getDocumentsById({ id });
 
   const [document] = documents;
@@ -32,8 +28,19 @@ export async function GET(request: Request) {
     return new ChatSDKError('not_found:document').toResponse();
   }
 
-  if (document.userId !== session.user.id) {
-    return new ChatSDKError('forbidden:document').toResponse();
+  // If user is authenticated, check ownership
+  if (session?.user) {
+    if (document.userId !== session.user.id) {
+      return new ChatSDKError('forbidden:document').toResponse();
+    }
+  } else {
+    // For unauthenticated users, check if the document belongs to a public chat
+    const { getChatByDocumentId } = await import('@/lib/db/queries');
+    const chat = await getChatByDocumentId({ documentId: id });
+    
+    if (!chat || chat.visibility !== 'public') {
+      return new ChatSDKError('forbidden:document').toResponse();
+    }
   }
 
   return Response.json(documents, { status: 200 });

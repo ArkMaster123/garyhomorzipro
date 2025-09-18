@@ -31,7 +31,7 @@ function PureChatHeader({
   selectedModelId: string;
   selectedVisibilityType: VisibilityType;
   isReadonly: boolean;
-  session: Session;
+  session?: Session | null;
   onModelChange?: (modelId: string) => void;
 }) {
   const router = useRouter();
@@ -109,7 +109,7 @@ function PureChatHeader({
               variant="outline"
               className="order-2 md:order-1 md:px-2 px-2 md:h-fit ml-auto md:ml-0"
               onClick={() => {
-                router.push('/');
+                router.push('/chat');
                 router.refresh();
               }}
             >

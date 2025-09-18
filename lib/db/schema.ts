@@ -9,6 +9,9 @@ import {
   primaryKey,
   foreignKey,
   boolean,
+  integer,
+  vector,
+  jsonb,
 } from 'drizzle-orm/pg-core';
 
 export const user = pgTable('User', {
@@ -16,6 +19,18 @@ export const user = pgTable('User', {
   email: varchar('email', { length: 64 }).notNull(),
   password: varchar('password', { length: 64 }),
   persona: varchar('persona', { length: 32 }).default('default'),
+  name: varchar('name', { length: 128 }), // User's display name
+  image: text('image'), // User's profile image URL
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+  
+  // Stripe subscription fields
+  stripeCustomerId: varchar('stripeCustomerId', { length: 128 }),
+  isSubscriber: boolean('isSubscriber').notNull().default(false),
+  subscriptionStatus: varchar('subscriptionStatus', { length: 32 }).default('inactive'),
+  subscriptionId: varchar('subscriptionId', { length: 128 }),
+  subscriptionEndDate: timestamp('subscriptionEndDate'),
+  dailyMessageCount: integer('dailyMessageCount').notNull().default(0),
+  lastMessageResetDate: timestamp('lastMessageResetDate').defaultNow(),
 });
 
 export type User = InferSelectModel<typeof user>;
@@ -169,3 +184,58 @@ export const stream = pgTable(
 );
 
 export type Stream = InferSelectModel<typeof stream>;
+
+export const emailTemplates = pgTable('EmailTemplates', {
+  id: uuid('id').primaryKey().notNull().defaultRandom(),
+  name: varchar('name', { length: 100 }).notNull(),
+  type: varchar('type', { enum: ['welcome', 'followUp'] }).notNull(),
+  subject: text('subject').notNull(),
+  htmlContent: text('htmlContent').notNull(),
+  dayNumber: integer('dayNumber'), // For follow-up emails (3, 7, 14)
+  isActive: boolean('isActive').notNull().default(true),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+});
+
+export type EmailTemplate = InferSelectModel<typeof emailTemplates>;
+
+// Knowledge Base Tables
+export const knowledgeBase = pgTable('KnowledgeBase', {
+  id: uuid('id').primaryKey().notNull().defaultRandom(),
+  personaId: varchar('personaId', { length: 32 }).notNull(), // 'gary_hormozi' or 'rory_sutherland'
+  title: text('title').notNull(),
+  content: text('content').notNull(),
+  contentType: varchar('contentType', { length: 16, enum: ['pdf', 'text', 'markdown'] }).notNull(),
+  fileUrl: text('fileUrl'), // For PDFs stored in Vercel Blob
+  embedding: vector('embedding', { dimensions: 1536 }), // OpenAI text-embedding-3-small dimensions
+  metadata: jsonb('metadata'), // For storing additional context
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+  createdBy: uuid('createdBy')
+    .notNull()
+    .references(() => user.id),
+});
+
+export type KnowledgeBase = InferSelectModel<typeof knowledgeBase>;
+
+export const knowledgeChunk = pgTable('KnowledgeChunk', {
+  id: uuid('id').primaryKey().notNull().defaultRandom(),
+  knowledgeBaseId: uuid('knowledgeBaseId')
+    .notNull()
+    .references(() => knowledgeBase.id, { onDelete: 'cascade' }),
+  chunkIndex: integer('chunkIndex').notNull(),
+  content: text('content').notNull(),
+  embedding: vector('embedding', { dimensions: 1536 }), // OpenAI text-embedding-3-small dimensions
+  metadata: jsonb('metadata'),
+});
+
+export type KnowledgeChunk = InferSelectModel<typeof knowledgeChunk>;
+
+export const adminUser = pgTable('AdminUser', {
+  userId: uuid('userId').primaryKey().notNull().references(() => user.id),
+  role: varchar('role', { length: 32 }).notNull().default('admin'),
+  permissions: jsonb('permissions'),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+});
+
+export type AdminUser = InferSelectModel<typeof adminUser>;

@@ -1,6 +1,24 @@
 import { tool } from 'ai';
 import { z } from 'zod';
 
+// Rate limiting for Brave Search API (1 request per second, 15000 per month)
+let lastRequestTime = 0;
+const MIN_REQUEST_INTERVAL = 3000; // 3 seconds to be safe
+
+async function rateLimitedRequest(url: string, options: RequestInit): Promise<Response> {
+  const now = Date.now();
+  const timeSinceLastRequest = now - lastRequestTime;
+  
+  if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
+    const waitTime = MIN_REQUEST_INTERVAL - timeSinceLastRequest;
+    console.log(`⏳ Rate limiting: waiting ${waitTime}ms before next Brave Search request`);
+    await new Promise(resolve => setTimeout(resolve, waitTime));
+  }
+  
+  lastRequestTime = Date.now();
+  return fetch(url, options);
+}
+
 export const webSearch = tool({
   description: 'Search the web using Brave Search API to get current information, news, and real-time data',
   inputSchema: z.object({
@@ -15,7 +33,13 @@ export const webSearch = tool({
     const apiKey = process.env.BRAVE_SEARCH_API_KEY;
     
     if (!apiKey) {
-      throw new Error('BRAVE_SEARCH_API_KEY environment variable is not set');
+      console.warn('BRAVE_SEARCH_API_KEY not set, skipping web search');
+      return {
+        error: 'Web search unavailable - API key not configured',
+        query,
+        web_results: [],
+        total_results: 0
+      };
     }
 
     // Build query parameters - filter out undefined values
@@ -39,7 +63,7 @@ export const webSearch = tool({
     }
 
     try {
-      const response = await fetch(`https://api.search.brave.com/res/v1/web/search?${params}`, {
+      const response = await rateLimitedRequest(`https://api.search.brave.com/res/v1/web/search?${params}`, {
         headers: {
           'Accept': 'application/json',
           'Accept-Encoding': 'gzip',

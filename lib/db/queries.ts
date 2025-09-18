@@ -10,6 +10,7 @@ import {
   gte,
   inArray,
   lt,
+  sql,
   type SQL,
 } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/postgres-js';
@@ -560,5 +561,30 @@ export async function getStreamIdsByChatId({ chatId }: { chatId: string }) {
       'bad_request:database',
       'Failed to get stream ids by chat id',
     );
+  }
+}
+
+export async function getChatByDocumentId({ documentId }: { documentId: string }) {
+  try {
+    // Find messages that contain document references in their parts
+    const messages = await db
+      .select({ chatId: message.chatId })
+      .from(message)
+      .where(
+        // Search for document ID in the JSON parts field
+        // This is a simplified approach - in production you might want to use a more sophisticated JSON query
+        sql`${message.parts}::text LIKE ${'%"id":"' + documentId + '"%'}`
+      )
+      .limit(1);
+
+    if (messages.length === 0) {
+      return null;
+    }
+
+    // Get the chat details
+    const chat = await getChatById({ id: messages[0].chatId });
+    return chat;
+  } catch (error) {
+    throw new ChatSDKError('bad_request:database', 'Failed to get chat by document ID');
   }
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronUp } from 'lucide-react';
+import { ChevronUp, CreditCard, User, Crown } from 'lucide-react';
 import Image from 'next/image';
 import type { User } from 'next-auth';
 import { signOut, useSession } from 'next-auth/react';
@@ -71,6 +71,29 @@ export function SidebarUserNav({ user }: { user: User }) {
             side="top"
             className="w-[--radix-popper-anchor-width]"
           >
+            {/* Profile Section */}
+            <DropdownMenuItem
+              className="cursor-pointer"
+              onSelect={() => router.push('/profile')}
+            >
+              <User className="mr-2 h-4 w-4" />
+              My Profile & Subscription
+            </DropdownMenuItem>
+            
+            {/* Subscription Management */}
+            {!isGuest && (
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onSelect={() => router.push('/profile')}
+              >
+                <Crown className="mr-2 h-4 w-4" />
+                Manage Subscription
+              </DropdownMenuItem>
+            )}
+            
+            <DropdownMenuSeparator />
+            
+            {/* Theme Toggle */}
             <DropdownMenuItem
               data-testid="user-nav-item-theme"
               className="cursor-pointer"
@@ -78,7 +101,10 @@ export function SidebarUserNav({ user }: { user: User }) {
             >
               {`Toggle ${resolvedTheme === 'light' ? 'dark' : 'light'} mode`}
             </DropdownMenuItem>
+            
             <DropdownMenuSeparator />
+            
+            {/* Sign Out */}
             <DropdownMenuItem asChild data-testid="user-nav-item-auth">
               <button
                 type="button"

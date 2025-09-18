@@ -13,7 +13,8 @@ export async function middleware(request: NextRequest) {
     return new Response('pong', { status: 200 });
   }
 
-  if (pathname.startsWith('/api/auth') || pathname.startsWith('/api/models')) {
+  // Skip middleware for API routes and auth pages
+  if (pathname.startsWith('/api/auth') || pathname.startsWith('/api/models') || pathname.startsWith('/api/ideator') || pathname.startsWith('/api/admin') || pathname === '/ideator' || pathname === '/admin') {
     return NextResponse.next();
   }
 
@@ -23,18 +24,19 @@ export async function middleware(request: NextRequest) {
     secureCookie: !isDevelopmentEnvironment,
   });
 
-  if (!token) {
-    const redirectUrl = encodeURIComponent(request.url);
-
-    return NextResponse.redirect(
-      new URL(`/api/auth/guest?redirectUrl=${redirectUrl}`, request.url),
-    );
+  // Allow guest access to main pages and chat
+  if (!token && (pathname === '/' || pathname.startsWith('/chat'))) {
+    return NextResponse.next();
   }
 
-  const isGuest = guestRegex.test(token?.email ?? '');
+  // Redirect unauthenticated users to sign-in for protected routes
+  if (!token && !pathname.startsWith('/sign-in') && !pathname.startsWith('/sign-up') && !pathname.startsWith('/guest-signin')) {
+    return NextResponse.redirect(new URL('/sign-in', request.url));
+  }
 
-  if (token && !isGuest && ['/login', '/register'].includes(pathname)) {
-    return NextResponse.redirect(new URL('/', request.url));
+  // Redirect authenticated users away from auth pages
+  if (token && (pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up'))) {
+    return NextResponse.redirect(new URL('/chat', request.url));
   }
 
   return NextResponse.next();
@@ -53,7 +55,10 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico, sitemap.xml, robots.txt (metadata files)
+     * - video files (.mp4, .webm, .ogg)
+     * - image files (.png, .jpg, .jpeg, .gif, .webp, .svg)
+     * - other static assets
      */
-    '/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)',
+    '/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|.*\\.(?:mp4|webm|ogg|png|jpg|jpeg|gif|webp|svg|ico|woff|woff2|ttf|eot)).*)',
   ],
 };

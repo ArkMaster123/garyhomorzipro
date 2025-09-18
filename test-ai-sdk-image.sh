@@ -5,8 +5,12 @@
 
 echo "🚀 Testing updated AI SDK implementation..."
 
-# Set API key
-export GEMINI_API_KEY=AIzaSyD-A-Ji_8CkUq2WxWxryfB_0mB2xM19mNM
+# Set API key from environment variable
+if [ -z "$GEMINI_API_KEY" ]; then
+    echo "❌ GEMINI_API_KEY environment variable is not set"
+    echo "Please set it with: export GEMINI_API_KEY=your_api_key_here"
+    exit 1
+fi
 
 # Start the development server and test
 echo "📦 Building and testing the image generation tool..."

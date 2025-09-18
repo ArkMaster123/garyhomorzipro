@@ -30,6 +30,8 @@ import { useVoice } from '@/hooks/use-voice';
 import type { VisibilityType } from './visibility-selector';
 import type { Attachment, ChatMessage } from '@/lib/types';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
+import { useGuestLimit } from '@/hooks/use-guest-limit';
+import { SignupPopup } from './signup-popup';
 
 function PureMultimodalInput({
   chatId,
@@ -60,6 +62,12 @@ function PureMultimodalInput({
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
+  const { canSendMessage, incrementMessageCount, showSignupPopup, setShowSignupPopup, remainingMessages, isGuest } = useGuestLimit();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -129,9 +137,18 @@ function PureMultimodalInput({
   const submitForm = useCallback(() => {
     window.history.replaceState({}, '', `/chat/${chatId}`);
 
+    // Check guest message limit
+    if (!canSendMessage) {
+      setShowSignupPopup(true);
+      return;
+    }
+
     const messageText = isWebSearchMode 
       ? `Please search the web for: ${input}`
       : input;
+
+    // Increment guest message count
+    incrementMessageCount();
 
     sendMessage({
       role: 'user',
@@ -233,6 +250,15 @@ function PureMultimodalInput({
 
   return (
     <div className="relative w-full flex flex-col gap-4">
+      {/* Guest message counter */}
+      {isClient && isGuest && (
+        <div className="text-center">
+          <span className="text-xs text-muted-foreground">
+            {remainingMessages} free messages remaining
+          </span>
+        </div>
+      )}
+      
       <AnimatePresence>
         {!isAtBottom && (
           <motion.div
@@ -354,6 +380,15 @@ function PureMultimodalInput({
           />
         )}
       </div>
+      
+      {/* Signup popup */}
+      {isClient && (
+        <SignupPopup
+          isOpen={showSignupPopup}
+          onClose={() => setShowSignupPopup(false)}
+          remainingMessages={remainingMessages}
+        />
+      )}
     </div>
   );
 }
