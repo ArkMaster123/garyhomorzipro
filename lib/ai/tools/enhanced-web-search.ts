@@ -47,6 +47,9 @@ export const enhancedWebSearch = tool({
   execute: async ({ query, focus, timeframe, includeStats }) => {
     const apiKey = process.env.BRAVE_SEARCH_API_KEY;
     
+    // Enhance query based on focus area and Gary Hormozi's interests
+    const enhancedQuery = enhanceQueryForBusiness(query, focus || 'general', includeStats || false);
+    
     if (!apiKey) {
       console.warn('BRAVE_SEARCH_API_KEY not set, skipping web search');
       return {
@@ -56,9 +59,6 @@ export const enhancedWebSearch = tool({
         timeframe
       };
     }
-
-    // Enhance query based on focus area and Gary Hormozi's interests
-    const enhancedQuery = enhanceQueryForBusiness(query, focus || 'general', includeStats || false);
     
     // Map timeframe to Brave Search freshness parameter
     const freshnessMap: Record<string, string> = {
