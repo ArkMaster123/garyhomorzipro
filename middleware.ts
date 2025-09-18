@@ -34,9 +34,9 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/sign-in', request.url));
   }
 
-  // Redirect authenticated users away from auth pages
+  // Redirect authenticated users away from auth pages to landing page
   if (token && (pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up'))) {
-    return NextResponse.redirect(new URL('/chat', request.url));
+    return NextResponse.redirect(new URL('/', request.url));
   }
 
   // Admin route protection

@@ -22,9 +22,9 @@ export const authConfig = {
       let isOnSignUp = nextUrl.pathname.startsWith('/sign-up');
       let isOnGuestSignIn = nextUrl.pathname.startsWith('/guest-signin');
 
-      // Redirect authenticated users away from auth pages
+      // Redirect authenticated users away from auth pages to landing page
       if (isLoggedIn && (isOnLogin || isOnRegister || isOnSignIn || isOnSignUp)) {
-        return Response.redirect(new URL('/chat', nextUrl));
+        return Response.redirect(new URL('/', nextUrl));
       }
 
       // Always allow access to auth pages
