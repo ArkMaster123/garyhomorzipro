@@ -101,7 +101,7 @@ export async function sendRegistrationWelcomeEmail(userEmail: string, userName: 
     return { success: true, messageId: result.messageId };
   } catch (error) {
     console.error('❌ Failed to send registration welcome email:', error);
-    return { success: false, error: error.message };
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
 }
 
