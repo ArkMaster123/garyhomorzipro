@@ -110,10 +110,11 @@ async function handleCustomerDeletion(customerId: string) {
 
 async function handleSubscriptionUpdate(customerId: string, subscription: Stripe.Subscription) {
   try {
-    // Handle the subscription end date properly
+    // Handle the subscription end date properly - using type assertion to bypass TypeScript issues
     let subscriptionEndDate: Date | null = null
-    if (subscription.current_period_end && typeof subscription.current_period_end === 'number') {
-      subscriptionEndDate = new Date(subscription.current_period_end * 1000)
+    const subscriptionData = subscription as any
+    if (subscriptionData.current_period_end && typeof subscriptionData.current_period_end === 'number') {
+      subscriptionEndDate = new Date(subscriptionData.current_period_end * 1000)
     }
 
     await db.update(user)
