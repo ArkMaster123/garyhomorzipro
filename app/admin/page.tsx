@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -80,6 +82,9 @@ interface EmbeddingSettings {
 }
 
 export default function AdminPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
   const [templates, setTemplates] = useState<EmailTemplate[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -164,12 +169,45 @@ export default function AdminPage() {
     };
   };
 
-  // Load templates from API
+  // Check admin access
   useEffect(() => {
-    loadTemplates();
-    loadEmailStats();
-    loadKnowledgeBase();
-  }, []);
+    if (status === 'loading') return;
+    
+    if (!session) {
+      router.push('/sign-in');
+      return;
+    }
+
+    // Check if user is admin
+    const checkAdminAccess = async () => {
+      try {
+        const response = await fetch('/api/admin/setup-admin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        
+        const result = await response.json();
+        setIsAdmin(result.success);
+        
+        if (!result.success) {
+          router.push('/chat');
+          return;
+        }
+        
+        // Load admin data
+        loadTemplates();
+        loadEmailStats();
+        loadKnowledgeBase();
+      } catch (error) {
+        console.error('Error checking admin access:', error);
+        setIsAdmin(false);
+        router.push('/chat');
+      }
+    };
+
+    checkAdminAccess();
+  }, [session, status, router]);
 
   useEffect(() => {
     loadKnowledgeBase();
@@ -528,15 +566,33 @@ export default function AdminPage() {
     );
   };
 
+  // Show loading state while checking admin access
+  if (status === 'loading' || isAdmin === null) {
+    return (
+      <div className="container mx-auto p-6 flex items-center justify-center min-h-[400px]">
+        <div className="flex items-center gap-2">
+          <Loader2 className="w-6 h-6 animate-spin" />
+          <span>Checking admin access...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading state while loading admin data
   if (loading) {
     return (
       <div className="container mx-auto p-6 flex items-center justify-center min-h-[400px]">
         <div className="flex items-center gap-2">
           <Loader2 className="w-6 h-6 animate-spin" />
-          <span>Loading email templates...</span>
+          <span>Loading admin dashboard...</span>
         </div>
       </div>
     );
+  }
+
+  // This should not render if user is not admin (redirected above)
+  if (!isAdmin) {
+    return null;
   }
 
   return (

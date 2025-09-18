@@ -4,10 +4,14 @@ import { knowledgeBase, knowledgeChunk } from '@/lib/db/schema';
 import { embed } from 'ai';
 import { gateway } from '@/lib/ai/gateway';
 import { eq, and, desc } from 'drizzle-orm';
+import { requireAdmin } from '@/lib/auth/admin';
 
 // POST /api/admin/knowledge-base/search - Vector similarity search
 export async function POST(request: NextRequest) {
   try {
+    // Check admin permissions
+    await requireAdmin();
+    
     const body = await request.json();
     const { 
       query, 
@@ -120,6 +124,12 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Error performing vector search:', error);
+    if (error instanceof Error && error.message === 'Admin access required') {
+      return NextResponse.json(
+        { success: false, error: 'Admin access required' },
+        { status: 403 }
+      );
+    }
     return NextResponse.json(
       { success: false, error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }

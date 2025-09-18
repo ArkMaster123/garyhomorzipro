@@ -13,8 +13,8 @@ export async function middleware(request: NextRequest) {
     return new Response('pong', { status: 200 });
   }
 
-  // Skip middleware for API routes and auth pages
-  if (pathname.startsWith('/api/auth') || pathname.startsWith('/api/models') || pathname.startsWith('/api/ideator') || pathname.startsWith('/api/admin') || pathname === '/ideator' || pathname === '/admin') {
+  // Skip middleware for auth pages and ideator
+  if (pathname.startsWith('/api/auth') || pathname.startsWith('/api/models') || pathname.startsWith('/api/ideator') || pathname === '/ideator') {
     return NextResponse.next();
   }
 
@@ -37,6 +37,17 @@ export async function middleware(request: NextRequest) {
   // Redirect authenticated users away from auth pages
   if (token && (pathname.startsWith('/sign-in') || pathname.startsWith('/sign-up'))) {
     return NextResponse.redirect(new URL('/chat', request.url));
+  }
+
+  // Admin route protection
+  if (pathname.startsWith('/admin') || pathname.startsWith('/api/admin')) {
+    if (!token) {
+      return NextResponse.redirect(new URL('/sign-in', request.url));
+    }
+    
+    // For admin routes, we'll let the route handlers check admin permissions
+    // since middleware doesn't have easy access to database
+    return NextResponse.next();
   }
 
   return NextResponse.next();

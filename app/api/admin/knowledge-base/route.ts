@@ -4,11 +4,13 @@ import { knowledgeBase } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { embed, embedMany } from 'ai';
 import { gateway } from '@/lib/ai/gateway';
+import { requireAdmin } from '@/lib/auth/admin';
 
 // POST /api/admin/knowledge-base - Create new knowledge base entry
 export async function POST(request: NextRequest) {
   try {
-    // Temporarily remove admin check for development
+    // Check admin permissions
+    await requireAdmin();
 
     const body = await request.json();
     const { personaId, title, content, contentType, fileUrl, embeddingModel = 'openai:text-embedding-3-small' } = body;
@@ -60,6 +62,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, data: newEntry });
   } catch (error) {
     console.error('Error creating knowledge base entry:', error);
+    if (error instanceof Error && error.message === 'Admin access required') {
+      return NextResponse.json(
+        { success: false, error: 'Admin access required' },
+        { status: 403 }
+      );
+    }
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500 }
@@ -70,7 +78,8 @@ export async function POST(request: NextRequest) {
 // GET /api/admin/knowledge-base - List knowledge base entries
 export async function GET(request: NextRequest) {
   try {
-    // Temporarily remove admin check for development
+    // Check admin permissions
+    await requireAdmin();
 
     const { searchParams } = new URL(request.url);
     const personaId = searchParams.get('personaId');
@@ -84,6 +93,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: true, data: entries });
   } catch (error) {
     console.error('Error fetching knowledge base entries:', error);
+    if (error instanceof Error && error.message === 'Admin access required') {
+      return NextResponse.json(
+        { success: false, error: 'Admin access required' },
+        { status: 403 }
+      );
+    }
     return NextResponse.json(
       { success: false, error: 'Internal server error' },
       { status: 500 }

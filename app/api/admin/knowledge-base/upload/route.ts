@@ -4,6 +4,7 @@ import { knowledgeBase, knowledgeChunk, user } from '@/lib/db/schema';
 import { embed, embedMany } from 'ai';
 import { gateway } from '@/lib/ai/gateway';
 import { put } from '@vercel/blob';
+import { requireAdmin } from '@/lib/auth/admin';
 
 // Interface for chunk metadata with page tracking
 interface ChunkMetadata {
@@ -191,11 +192,8 @@ function calculateCosts(estimatedTokens: number) {
 // POST /api/admin/knowledge-base/upload - Handle file uploads and processing
 export async function POST(request: NextRequest) {
   try {
-    // Temporarily remove admin check for development
-    // const session = await auth();
-    // if (!session?.user?.id) {
-    //   return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
-    // }
+    // Check admin permissions
+    await requireAdmin();
 
     // // Check if user is admin
     // const adminCheck = await db
@@ -438,6 +436,12 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Error processing upload:', error);
+    if (error instanceof Error && error.message === 'Admin access required') {
+      return NextResponse.json(
+        { success: false, error: 'Admin access required' },
+        { status: 403 }
+      );
+    }
     return NextResponse.json(
       { success: false, error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }

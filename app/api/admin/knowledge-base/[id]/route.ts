@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { knowledgeBase, knowledgeChunk } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { requireAdmin } from '@/lib/auth/admin';
 import { embed } from 'ai';
 import { gateway } from '@/lib/ai/gateway';
 
@@ -11,8 +12,10 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Check admin permissions
+    await requireAdmin();
+    
     const { id } = await params;
-    // Temporarily remove admin check for development
     // const session = await auth();
     // if (!session?.user?.id) {
     //   return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
@@ -145,12 +148,10 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Check admin permissions
+    await requireAdmin();
+    
     const { id } = await params;
-    // Temporarily remove admin check for development
-    // const session = await auth();
-    // if (!session?.user?.id) {
-    //   return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
-    // }
 
     // // Check if user is admin
     // const adminCheck = await db

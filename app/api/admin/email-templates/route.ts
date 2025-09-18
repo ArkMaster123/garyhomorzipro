@@ -2,10 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db/index';
 import { emailTemplates } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { requireAdmin } from '@/lib/auth/admin';
 
 // GET /api/admin/email-templates - Get all email templates
 export async function GET() {
   try {
+    // Check admin permissions
+    await requireAdmin();
+    
     const templates = await db.select().from(emailTemplates).orderBy(emailTemplates.createdAt);
     
     return NextResponse.json({
@@ -14,6 +18,12 @@ export async function GET() {
     });
   } catch (error) {
     console.error('Error fetching email templates:', error);
+    if (error instanceof Error && error.message === 'Admin access required') {
+      return NextResponse.json(
+        { success: false, error: 'Admin access required' },
+        { status: 403 }
+      );
+    }
     return NextResponse.json(
       { success: false, error: 'Failed to fetch email templates' },
       { status: 500 }
@@ -24,6 +34,9 @@ export async function GET() {
 // POST /api/admin/email-templates - Create or update email template
 export async function POST(request: NextRequest) {
   try {
+    // Check admin permissions
+    await requireAdmin();
+    
     const body = await request.json();
     const { id, name, type, subject, htmlContent, dayNumber, isActive } = body;
 
@@ -70,6 +83,12 @@ export async function POST(request: NextRequest) {
     }
   } catch (error) {
     console.error('Error saving email template:', error);
+    if (error instanceof Error && error.message === 'Admin access required') {
+      return NextResponse.json(
+        { success: false, error: 'Admin access required' },
+        { status: 403 }
+      );
+    }
     return NextResponse.json(
       { success: false, error: 'Failed to save email template' },
       { status: 500 }
