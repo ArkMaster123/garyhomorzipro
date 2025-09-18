@@ -1,6 +1,6 @@
 import { db } from '@/lib/db'
 import { user, invite } from '@/lib/db/migrations/schema'
-import { eq, and, isNull, or, gt, sql } from 'drizzle-orm'
+import { eq, and, isNull, or, gt, sql, desc } from 'drizzle-orm'
 import { randomBytes } from 'crypto'
 
 export interface InviteData {
@@ -119,7 +119,7 @@ export async function getInvitesByUser(userId: string): Promise<InviteData[]> {
     .select()
     .from(invite)
     .where(eq(invite.invitedBy, userId))
-    .orderBy(invite.createdAt, 'desc')
+    .orderBy(desc(invite.createdAt))
 
   return invites as InviteData[]
 }
