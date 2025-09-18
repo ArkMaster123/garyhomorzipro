@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@/app/api/auth/[...nextauth]/route'
+import { auth } from '@/app/(auth)/auth'
 import { createInvite, validateInvite, useInvite } from '@/lib/auth/invites'
 
 // POST endpoint for creating invites (admin-protected)
