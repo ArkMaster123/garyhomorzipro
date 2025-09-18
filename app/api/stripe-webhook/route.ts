@@ -110,10 +110,16 @@ async function handleCustomerDeletion(customerId: string) {
 
 async function handleSubscriptionUpdate(customerId: string, subscription: Stripe.Subscription) {
   try {
+    // Handle the subscription end date properly
+    let subscriptionEndDate: Date | null = null
+    if (subscription.current_period_end && typeof subscription.current_period_end === 'number') {
+      subscriptionEndDate = new Date(subscription.current_period_end * 1000)
+    }
+
     await db.update(user)
       .set({
         subscriptionStatus: subscription.status,
-        subscriptionEndDate: subscription.current_period_end ? new Date((subscription.current_period_end as number) * 1000) : null,
+        subscriptionEndDate,
       })
       .where(eq(user.stripeCustomerId, customerId))
 
