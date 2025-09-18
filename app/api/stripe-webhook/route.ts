@@ -113,7 +113,7 @@ async function handleSubscriptionUpdate(customerId: string, subscription: Stripe
     await db.update(user)
       .set({
         subscriptionStatus: subscription.status,
-        subscriptionEndDate: new Date(subscription.current_period_end * 1000),
+        subscriptionEndDate: subscription.current_period_end ? new Date(subscription.current_period_end * 1000) : null,
       })
       .where(eq(user.stripeCustomerId, customerId))
 
