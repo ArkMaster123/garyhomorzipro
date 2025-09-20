@@ -7,6 +7,7 @@ import { PlusIcon } from '@/components/icons';
 import { SidebarHistory } from '@/components/sidebar-history';
 import { SidebarUserNav } from '@/components/sidebar-user-nav';
 import { SidebarSubscriptionStatus } from '@/components/sidebar-subscription-status';
+import { UnifiedAuthButton } from '@/components/unified-auth-button';
 import { Button } from '@/components/ui/button';
 import {
   Sidebar,
@@ -63,11 +64,20 @@ export function AppSidebar({ user }: { user: User | undefined }) {
         <SidebarHistory user={user} />
       </SidebarContent>
       <SidebarFooter>
-        {user && (
+        {user ? (
           <>
             <SidebarSubscriptionStatus />
             <SidebarUserNav user={user} />
           </>
+        ) : (
+          <div className="p-2">
+            <div className="text-xs text-muted-foreground mb-2 text-center">
+              Login to save and revisit previous chats!
+            </div>
+            <div className="flex flex-col gap-2">
+              <UnifiedAuthButton />
+            </div>
+          </div>
         )}
       </SidebarFooter>
     </Sidebar>
