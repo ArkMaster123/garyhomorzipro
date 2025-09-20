@@ -19,6 +19,7 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { toast } from './toast';
 import { LoaderIcon } from './icons';
 import { guestRegex } from '@/lib/constants';
@@ -72,22 +73,20 @@ export function SidebarUserNav({ user }: { user: User }) {
             className="w-[--radix-popper-anchor-width]"
           >
             {/* Profile Section */}
-            <DropdownMenuItem
-              className="cursor-pointer"
-              onSelect={() => router.push('/profile')}
-            >
-              <UserIcon className="mr-2 h-4 w-4" />
-              My Profile & Subscription
+            <DropdownMenuItem asChild>
+              <Link href="/profile" className="flex items-center cursor-pointer">
+                <UserIcon className="mr-2 h-4 w-4" />
+                My Profile & Subscription
+              </Link>
             </DropdownMenuItem>
             
             {/* Subscription Management */}
             {!isGuest && (
-              <DropdownMenuItem
-                className="cursor-pointer"
-                onSelect={() => router.push('/profile')}
-              >
-                <Crown className="mr-2 h-4 w-4" />
-                Manage Subscription
+              <DropdownMenuItem asChild>
+                <Link href="/profile" className="flex items-center cursor-pointer">
+                  <Crown className="mr-2 h-4 w-4" />
+                  Manage Subscription
+                </Link>
               </DropdownMenuItem>
             )}
             
