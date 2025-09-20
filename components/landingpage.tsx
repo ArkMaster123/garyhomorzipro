@@ -330,10 +330,11 @@ const LandingPage: React.FC = () => {
                 
                 <div className="pt-12">
                   <div className="flex -space-x-4">
-                    {[...Array(5)].map((_, i) => (
-                      <Image key={i} src={`/avatar-${i + 1}.png`} alt={`Founder ${i + 1}`} width={40} height={40} className="rounded-full border-2 border-[#0B1121]" />
+                    <Image key={0} src="/avatar-1.png" alt="Founder 1" width={40} height={40} className="rounded-full border-2 border-[#0B1121]" />
+                    {[...Array(4)].map((_, i) => (
+                      <Image key={i + 1} src={`/avatar-${i + 2}.svg`} alt={`Founder ${i + 2}`} width={40} height={40} className="rounded-full border-2 border-[#0B1121]" />
                     ))}
-                    <div className="w-10 h-10 rounded-full bg-[#1E293B] border-2 border-[#2D3B4F] flex items-center justify-center text-sm">
+                    <div className="w-10 h-10 rounded-full bg-[#1E293B] border-2 border-[#2D3B4F] flex items-center justify-center text-sm text-white">
                       +15
                     </div>
                   </div>
