@@ -119,16 +119,16 @@ function PureMultimodalInput({
   const [uploadQueue, setUploadQueue] = useState<Array<string>>([]);
   const [isWebSearchMode, setIsWebSearchMode] = useState(false);
   
-  // Voice functionality using custom hook
-  const {
-    isListening,
-    isVoiceEnabled,
-    isSpeaking,
-    toggleVoice,
-    startListening,
-    stopListening,
-    speakText,
-  } = useVoice();
+  // Voice functionality using custom hook - DISABLED
+  // const {
+  //   isListening,
+  //   isVoiceEnabled,
+  //   isSpeaking,
+  //   toggleVoice,
+  //   startListening,
+  //   stopListening,
+  //   speakText,
+  // } = useVoice();
 
   const handleVoiceTranscript = (transcript: string) => {
     setInput(transcript);
@@ -361,11 +361,12 @@ function PureMultimodalInput({
           status={status} 
           isWebSearchMode={isWebSearchMode}
           setIsWebSearchMode={setIsWebSearchMode}
-          isListening={isListening}
-          startListening={() => startListening(handleVoiceTranscript)}
-          stopListening={stopListening}
-          isVoiceEnabled={isVoiceEnabled}
-          toggleVoice={toggleVoice}
+          // Voice props - DISABLED
+          // isListening={isListening}
+          // startListening={() => startListening(handleVoiceTranscript)}
+          // stopListening={stopListening}
+          // isVoiceEnabled={isVoiceEnabled}
+          // toggleVoice={toggleVoice}
         />
       </div>
 
@@ -411,21 +412,23 @@ function PureAttachmentsButton({
   status,
   isWebSearchMode,
   setIsWebSearchMode,
-  isListening,
-  startListening,
-  stopListening,
-  isVoiceEnabled,
-  toggleVoice,
+  // Voice props - DISABLED
+  // isListening,
+  // startListening,
+  // stopListening,
+  // isVoiceEnabled,
+  // toggleVoice,
 }: {
   fileInputRef: React.MutableRefObject<HTMLInputElement | null>;
   status: UseChatHelpers<ChatMessage>['status'];
   isWebSearchMode: boolean;
   setIsWebSearchMode: (value: boolean) => void;
-  isListening: boolean;
-  startListening: () => void;
-  stopListening: () => void;
-  isVoiceEnabled: boolean;
-  toggleVoice: () => void;
+  // Voice props - DISABLED
+  // isListening: boolean;
+  // startListening: () => void;
+  // stopListening: () => void;
+  // isVoiceEnabled: boolean;
+  // toggleVoice: () => void;
 }) {
   return (
     <div className="flex items-center gap-1">
@@ -462,8 +465,8 @@ function PureAttachmentsButton({
         <SearchIcon size={14} />
       </Button>
 
-      {/* Voice Toggle Button */}
-      <Button
+      {/* Voice Toggle Button - DISABLED */}
+      {/* <Button
         data-testid="voice-toggle-button"
         className={cx(
           "rounded-md p-[7px] h-fit dark:border-zinc-700 hover:dark:bg-zinc-900 hover:bg-zinc-200",
@@ -479,8 +482,8 @@ function PureAttachmentsButton({
         {isVoiceEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />}
       </Button>
 
-      {/* Microphone Button */}
-      {isVoiceEnabled && (
+      {/* Microphone Button - DISABLED */}
+      {/* {isVoiceEnabled && (
         <Button
           data-testid="microphone-button"
           className={cx(
@@ -500,7 +503,7 @@ function PureAttachmentsButton({
         >
           {isListening ? <MicOff size={14} /> : <Mic size={14} />}
         </Button>
-      )}
+      )} */}
       
       <TooltipProvider>
         <Tooltip>

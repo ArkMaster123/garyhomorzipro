@@ -37,7 +37,8 @@ function PureChatHeader({
   const router = useRouter();
   const { open } = useSidebar();
   const [currentPersona, setCurrentPersona] = useState<PersonaType>('default');
-  const { isVoiceEnabled, toggleVoice } = useVoice();
+  // Voice functionality - DISABLED
+  // const { isVoiceEnabled, toggleVoice } = useVoice();
 
   const { width: windowWidth } = useWindowSize();
 
@@ -137,8 +138,8 @@ function PureChatHeader({
         />
       )}
 
-      {/* Voice Toggle Button */}
-      {!isReadonly && (
+      {/* Voice Toggle Button - DISABLED */}
+      {/* {!isReadonly && (
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -157,7 +158,7 @@ function PureChatHeader({
             <p>{isVoiceEnabled ? 'Disable voice responses' : 'Enable voice responses'}</p>
           </TooltipContent>
         </Tooltip>
-      )}
+      )} */}
 
       {!isReadonly && (
         <VisibilitySelector

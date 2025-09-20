@@ -2,9 +2,11 @@ import { motion } from 'framer-motion';
 import { PersonaPreview } from './persona-preview';
 import { useEffect, useState } from 'react';
 import type { PersonaType } from '@/lib/ai/personas';
+import { useGuestLimit } from '@/hooks/use-guest-limit';
 
 export const Greeting = () => {
   const [currentPersona, setCurrentPersona] = useState<PersonaType>('default');
+  const { remainingMessages, isGuest } = useGuestLimit();
 
   // Load current persona
   useEffect(() => {
@@ -67,9 +69,21 @@ export const Greeting = () => {
         <div className="text-2xl font-semibold mb-2">
           Hello there!
         </div>
-        <div className="text-xl text-zinc-500">
+        <div className="text-xl text-zinc-500 mb-4">
           How can I help you today?
         </div>
+        
+        {/* Guest Message Limit Display */}
+        {isGuest && (
+          <div className="text-sm text-muted-foreground bg-muted/50 rounded-lg p-3 mb-4">
+            <div className="font-medium">
+              {remainingMessages} free messages remaining
+            </div>
+            <div className="text-xs mt-1">
+              Sign up for unlimited access to Gary's AI coaching
+            </div>
+          </div>
+        )}
       </motion.div>
     </div>
   );
