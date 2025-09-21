@@ -7,6 +7,7 @@ import { PlusIcon } from '@/components/icons';
 import { SidebarHistory } from '@/components/sidebar-history';
 import { SidebarUserNav } from '@/components/sidebar-user-nav';
 import { SidebarSubscriptionStatus } from '@/components/sidebar-subscription-status';
+import { SidebarGuestLimit } from '@/components/sidebar-guest-limit';
 import { UnifiedAuthButton } from '@/components/unified-auth-button';
 import { Button } from '@/components/ui/button';
 import {
@@ -70,14 +71,17 @@ export function AppSidebar({ user }: { user: User | undefined }) {
             <SidebarUserNav user={user} />
           </>
         ) : (
-          <div className="p-2">
-            <div className="text-xs text-muted-foreground mb-2 text-center">
-              Login to save and revisit previous chats!
+          <>
+            <SidebarGuestLimit />
+            <div className="p-2">
+              <div className="text-xs text-muted-foreground mb-2 text-center">
+                Login to save and revisit previous chats!
+              </div>
+              <div className="flex flex-col gap-2">
+                <UnifiedAuthButton />
+              </div>
             </div>
-            <div className="flex flex-col gap-2">
-              <UnifiedAuthButton />
-            </div>
-          </div>
+          </>
         )}
       </SidebarFooter>
     </Sidebar>

@@ -16,7 +16,17 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
-    return NextResponse.json(subscription)
+    // Calculate remaining messages
+    const freeLimit = parseInt(process.env.FREE_USER_MESSAGE_LIMIT || '10')
+    const paidLimit = parseInt(process.env.PAID_USER_MESSAGE_LIMIT || '1000')
+    
+    const limit = subscription.isSubscriber ? paidLimit : freeLimit
+    const remainingMessages = Math.max(0, limit - subscription.dailyMessageCount)
+
+    return NextResponse.json({
+      ...subscription,
+      remainingMessages
+    })
   } catch (err) {
     console.error('Error fetching subscription status:', err)
     return NextResponse.json({ error: 'Error fetching subscription status' }, { status: 500 })
