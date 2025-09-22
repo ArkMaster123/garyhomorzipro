@@ -31,7 +31,22 @@ import type { VisibilityType } from './visibility-selector';
 import type { Attachment, ChatMessage } from '@/lib/types';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { useGuestLimit } from '@/hooks/use-guest-limit';
+import { useModelContext } from '@/hooks/use-model-context';
+import { usePersona } from '@/hooks/use-persona';
 import { SignupPopup } from './signup-popup';
+import { 
+  Context, 
+  ContextTrigger, 
+  ContextContent, 
+  ContextContentHeader, 
+  ContextContentBody,
+  ContextContentFooter,
+  ContextInputUsage,
+  ContextOutputUsage,
+  ContextReasoningUsage,
+  ContextCacheUsage
+} from './ai-elements/context';
+import { estimateCost } from 'tokenlens';
 
 function PureMultimodalInput({
   chatId,
@@ -46,6 +61,8 @@ function PureMultimodalInput({
   sendMessage,
   className,
   selectedVisibilityType,
+  selectedModelId,
+  session,
 }: {
   chatId: string;
   input: string;
@@ -59,11 +76,51 @@ function PureMultimodalInput({
   sendMessage: UseChatHelpers<ChatMessage>['sendMessage'];
   className?: string;
   selectedVisibilityType: VisibilityType;
+  selectedModelId?: string;
+  session?: any;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
   const { canSendMessage, incrementMessageCount, showSignupPopup, setShowSignupPopup, remainingMessages, isGuest } = useGuestLimit();
+  const { currentPersona } = usePersona(session);
   const [isClient, setIsClient] = useState(false);
+
+  // Calculate estimated token usage for context display
+  const estimateInputTokens = (text: string): number => {
+    if (!text || text.trim().length === 0) return 0;
+    // More accurate estimation: 1 token ≈ 4 characters for English text
+    // Account for spaces, punctuation, and special characters
+    const cleanedText = text.trim();
+    // For very short text, always return at least 1 token
+    if (cleanedText.length <= 4) return 1;
+    return Math.ceil(cleanedText.length / 4);
+  };
+
+  const estimatedTokens = estimateInputTokens(input || '');
+  const modelId = selectedModelId ? selectedModelId.replace('/', ':') as any : 'openai:gpt-4o';
+  
+  // Always show at least 1 token if there's any input, for better UX
+  const displayTokens = input && input.trim().length > 0 ? Math.max(estimatedTokens, 1) : 0;
+  
+  // Get real context window from AI Gateway API with caching
+  const { contextWindow: maxTokens, isLoading: contextLoading } = useModelContext(modelId);
+  const usedTokens = Math.min(displayTokens, maxTokens); // Cap at max tokens
+
+  // Debug logging
+  console.log('Debug - Input:', JSON.stringify(input), 'Length:', input?.length, 'Trimmed length:', input?.trim().length, 'Estimated tokens:', estimatedTokens, 'Display tokens:', displayTokens);
+  console.log('Debug - Context Props:', {
+    maxTokens,
+    contextLoading,
+    usedTokens: displayTokens,
+    modelId,
+    usage: {
+      inputTokens: displayTokens,
+      outputTokens: 0,
+      totalTokens: displayTokens,
+      cachedInputTokens: 0,
+      reasoningTokens: 0,
+    }
+  });
 
   useEffect(() => {
     setIsClient(true);
@@ -187,7 +244,8 @@ function PureMultimodalInput({
     isWebSearchMode,
   ]);
 
-  const uploadFile = async (file: File) => {
+  // File Upload Function - DISABLED
+  /* const uploadFile = async (file: File) => {
     const formData = new FormData();
     formData.append('file', file);
 
@@ -212,9 +270,10 @@ function PureMultimodalInput({
     } catch (error) {
       toast.error('Failed to upload file, please try again!');
     }
-  };
+  }; */
 
-  const handleFileChange = useCallback(
+  // File Change Handler - DISABLED
+  /* const handleFileChange = useCallback(
     async (event: ChangeEvent<HTMLInputElement>) => {
       const files = Array.from(event.target.files || []);
 
@@ -238,7 +297,7 @@ function PureMultimodalInput({
       }
     },
     [setAttachments],
-  );
+  ); */
 
   const { isAtBottom, scrollToBottom } = useScrollToBottom();
 
@@ -284,24 +343,26 @@ function PureMultimodalInput({
         )}
       </AnimatePresence>
 
-      {messages.length === 0 &&
+        {messages.length === 0 &&
         attachments.length === 0 &&
         uploadQueue.length === 0 && (
           <SuggestedActions
             sendMessage={sendMessage}
             chatId={chatId}
             selectedVisibilityType={selectedVisibilityType}
+            currentPersona={currentPersona}
           />
         )}
 
-      <input
+      {/* File Input - DISABLED */}
+      {/* <input
         type="file"
         className="fixed -top-4 -left-4 size-0.5 opacity-0 pointer-events-none"
         ref={fileInputRef}
         multiple
         onChange={handleFileChange}
         tabIndex={-1}
-      />
+      /> */}
 
       {(attachments.length > 0 || uploadQueue.length > 0) && (
         <div
@@ -370,6 +431,64 @@ function PureMultimodalInput({
         />
       </div>
 
+      {/* Context Usage Display - Top Right */}
+      <div className="absolute top-2 right-2">
+        <Context
+          maxTokens={maxTokens}
+          usedTokens={displayTokens}
+          usage={{
+            inputTokens: displayTokens,
+            outputTokens: 0,
+            totalTokens: displayTokens,
+            cachedInputTokens: 0,
+            reasoningTokens: 0,
+          }}
+          modelId={modelId}
+        >
+          <ContextTrigger />
+          <ContextContent>
+            <ContextContentHeader>
+              <div className="w-full space-y-2">
+                <div className="flex items-center justify-between gap-3 text-xs">
+                  <p>{new Intl.NumberFormat("en-US", {
+                    style: "percent",
+                    maximumFractionDigits: 1,
+                  }).format(displayTokens / maxTokens)}</p>
+                  <p className="font-mono text-muted-foreground">
+                    {new Intl.NumberFormat("en-US", {
+                      notation: "compact",
+                    }).format(displayTokens)} / {new Intl.NumberFormat("en-US", {
+                      notation: "compact",
+                    }).format(maxTokens)}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-muted-foreground">Model</span>
+                    <span className="font-mono">{modelId}</span>
+                  </div>
+                  <div className="w-full bg-muted rounded-full h-2">
+                    <div 
+                      className="bg-primary h-2 rounded-full transition-all duration-300" 
+                      style={{ width: `${Math.min((displayTokens / maxTokens) * 100, 100)}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </ContextContentHeader>
+            <ContextContentBody>
+              <ContextInputUsage />
+              <ContextOutputUsage />
+              <ContextReasoningUsage />
+              <ContextCacheUsage />
+            </ContextContentBody>
+            <ContextContentFooter>
+              {/* Empty footer to remove cost display */}
+            </ContextContentFooter>
+          </ContextContent>
+        </Context>
+      </div>
+
       <div className="absolute bottom-0 right-0 p-2 w-fit flex flex-row justify-end">
         {status === 'submitted' ? (
           <StopButton stop={stop} setMessages={setMessages} />
@@ -402,6 +521,7 @@ export const MultimodalInput = memo(
     if (!equal(prevProps.attachments, nextProps.attachments)) return false;
     if (prevProps.selectedVisibilityType !== nextProps.selectedVisibilityType)
       return false;
+    if (prevProps.session?.user?.id !== nextProps.session?.user?.id) return false;
 
     return true;
   },
@@ -432,7 +552,8 @@ function PureAttachmentsButton({
 }) {
   return (
     <div className="flex items-center gap-1">
-      <Button
+      {/* File Upload Button - DISABLED */}
+      {/* <Button
         data-testid="attachments-button"
         className={cx(
           "rounded-md rounded-bl-lg p-[7px] h-fit dark:border-zinc-700 hover:dark:bg-zinc-900 hover:bg-zinc-200",
@@ -447,7 +568,7 @@ function PureAttachmentsButton({
         variant={!isWebSearchMode ? "ghost" : "outline"}
       >
         <PaperclipIcon size={14} />
-      </Button>
+      </Button> */}
 
       <Button
         data-testid="web-search-button"
@@ -505,7 +626,8 @@ function PureAttachmentsButton({
         </Button>
       )} */}
       
-      <TooltipProvider>
+      {/* Info Tooltip - DISABLED (mentions file upload) */}
+      {/* <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -536,7 +658,7 @@ function PureAttachmentsButton({
             </div>
           </TooltipContent>
         </Tooltip>
-      </TooltipProvider>
+      </TooltipProvider> */}
     </div>
   );
 }

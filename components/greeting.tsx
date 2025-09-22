@@ -39,7 +39,7 @@ export const Greeting = () => {
         <div className="flex justify-center mb-6">
           <div className="w-24 h-24 rounded-2xl overflow-hidden bg-gradient-to-br from-muted/30 to-muted/50 border-2 border-muted shadow-lg">
             <img
-              src={`/images/personas/${currentPersona}.webp`}
+              src={`/images/personas/${currentPersona === 'default' ? 'default-assistant' : currentPersona}.webp`}
               alt={`${currentPersona} character`}
               className="w-full h-full object-cover"
             />
