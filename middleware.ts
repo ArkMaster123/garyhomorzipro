@@ -13,8 +13,8 @@ export async function middleware(request: NextRequest) {
     return new Response('pong', { status: 200 });
   }
 
-  // Skip middleware for auth pages and ideator
-  if (pathname.startsWith('/api/auth') || pathname.startsWith('/api/models') || pathname.startsWith('/api/ideator') || pathname === '/ideator') {
+  // Skip middleware for auth pages, ideator, and Stripe webhooks
+  if (pathname.startsWith('/api/auth') || pathname.startsWith('/api/models') || pathname.startsWith('/api/ideator') || pathname.startsWith('/api/stripe') || pathname === '/ideator') {
     return NextResponse.next();
   }
 
@@ -24,8 +24,8 @@ export async function middleware(request: NextRequest) {
     secureCookie: !isDevelopmentEnvironment,
   });
 
-  // Allow guest access to main pages and chat
-  if (!token && (pathname === '/' || pathname.startsWith('/chat'))) {
+  // Allow guest access to main pages, chat, and subscription page
+  if (!token && (pathname === '/' || pathname.startsWith('/chat') || pathname.startsWith('/subscription'))) {
     return NextResponse.next();
   }
 
