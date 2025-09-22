@@ -18,7 +18,7 @@ import {
   InlineCitationQuote,
 } from '@/components/ai-elements/inline-citation';
 import { Button } from '@/components/ui/button';
-import { citationSchema } from '@/app/api/citation/route';
+import { citationSchema } from '@/lib/schemas/citation';
 
 export default function Page() {
   const { object, submit, isLoading } = useObject({
