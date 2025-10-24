@@ -40,9 +40,10 @@ export async function middleware(request: NextRequest) {
   }
 
   // Redirect authenticated users from landing page to chat
-  if (token && pathname === '/') {
-    return NextResponse.redirect(new URL('/chat', request.url));
-  }
+  // Commented out to allow authenticated users to see the landing page
+  // if (token && pathname === '/') {
+  //   return NextResponse.redirect(new URL('/chat', request.url));
+  // }
 
   // Admin route protection
   if (pathname.startsWith('/admin') || pathname.startsWith('/api/admin')) {
