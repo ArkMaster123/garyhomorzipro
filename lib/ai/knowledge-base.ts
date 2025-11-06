@@ -2,7 +2,7 @@ import { embed } from 'ai';
 import { db } from '@/lib/db';
 import { knowledgeBase, knowledgeChunk } from '@/lib/db/schema';
 import { eq, sql } from 'drizzle-orm';
-import { gateway } from './gateway';
+import { gateway, isGatewayAvailable } from './gateway';
 import type { PersonaType } from './personas';
 
 export interface KnowledgeSearchResult {
@@ -53,6 +53,11 @@ export async function searchKnowledgeBase(
         searchQuery: query,
         personaId,
       };
+    }
+
+    // Check if gateway is available
+    if (!isGatewayAvailable() || !gateway) {
+      throw new Error('AI Gateway not configured. Cannot perform knowledge base search.');
     }
 
     // Generate embedding for the search query using gateway

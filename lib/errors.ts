@@ -46,7 +46,7 @@ export class ChatSDKError extends Error {
     this.type = type as ErrorType;
     this.cause = cause;
     this.surface = surface as Surface;
-    this.message = getMessageByErrorCode(errorCode);
+    this.message = getMessageByErrorCode(errorCode, cause);
     this.statusCode = getStatusCodeByType(this.type);
   }
 
@@ -73,7 +73,7 @@ export class ChatSDKError extends Error {
   }
 }
 
-export function getMessageByErrorCode(errorCode: ErrorCode): string {
+export function getMessageByErrorCode(errorCode: ErrorCode, cause?: string): string {
   if (errorCode.includes('database')) {
     return 'An error occurred while executing a database query.';
   }
@@ -97,6 +97,12 @@ export function getMessageByErrorCode(errorCode: ErrorCode): string {
       return 'You need to sign in to view this chat. Please sign in and try again.';
     case 'offline:chat':
       return "We're having trouble sending your message. Please check your internet connection and try again.";
+    case 'bad_request:chat':
+      // Check if the cause mentions gateway configuration
+      if (cause?.includes('AI Gateway is not configured')) {
+        return 'AI Gateway is not configured. Please contact support or check your environment variables.';
+      }
+      return "The request couldn't be processed. Please check your input and try again.";
 
     case 'not_found:document':
       return 'The requested document was not found. Please check the document ID and try again.';

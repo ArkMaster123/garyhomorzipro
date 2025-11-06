@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { knowledgeBase, knowledgeChunk, user } from '@/lib/db/schema';
 import { embed, embedMany } from 'ai';
-import { gateway } from '@/lib/ai/gateway';
+import { gateway, isGatewayAvailable } from '@/lib/ai/gateway';
 import { put } from '@vercel/blob';
 import { requireAdmin } from '@/lib/auth/admin';
 
@@ -334,7 +334,12 @@ export async function POST(request: NextRequest) {
     
     // Extract just the text for embedding
     const chunks = chunkMetadata.map(chunk => chunk.text);
-    
+
+    // Check if gateway is available
+    if (!isGatewayAvailable() || !gateway) {
+      throw new Error('AI Gateway not configured. Cannot upload knowledge base content.');
+    }
+
     // Convert model string to AI SDK model object using gateway
     const getEmbeddingModel = (modelString: string) => {
       switch (modelString) {

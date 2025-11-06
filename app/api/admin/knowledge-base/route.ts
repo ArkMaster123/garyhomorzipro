@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { knowledgeBase } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { embed, embedMany } from 'ai';
-import { gateway } from '@/lib/ai/gateway';
+import { gateway, isGatewayAvailable } from '@/lib/ai/gateway';
 import { requireAdmin } from '@/lib/auth/admin';
 
 // POST /api/admin/knowledge-base - Create new knowledge base entry
@@ -19,6 +19,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, error: 'Missing required fields: personaId, title, content, contentType' },
         { status: 400 }
+      );
+    }
+
+    // Check if gateway is available
+    if (!isGatewayAvailable() || !gateway) {
+      return NextResponse.json(
+        { success: false, error: 'AI Gateway not configured. Cannot create knowledge base entry.' },
+        { status: 503 }
       );
     }
 

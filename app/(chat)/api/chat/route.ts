@@ -102,50 +102,55 @@ export async function POST(request: Request) {
 
     const session = await auth();
 
-    if (!session?.user) {
-      return new ChatSDKError('unauthorized:chat').toResponse();
-    }
+    // Support guest users (no session)
+    const isGuest = !session?.user;
+    const userId = session?.user?.id || 'guest';
+    const userType: UserType = session?.user?.type || 'guest';
 
-    const userType: UserType = session.user.type;
+    // For guests, we don't save chat history or check DB limits
+    // Frontend handles guest message limits via localStorage
+    if (!isGuest) {
+      // Check Stripe-based message limits for authenticated users
+      const limitCheck = await checkMessageLimit(session.user.id);
+      
+      if (!limitCheck.canSend) {
+        return new Response(
+          JSON.stringify({ 
+            error: 'Message limit reached',
+            limitReached: true,
+            remainingMessages: limitCheck.remainingMessages,
+            isSubscriber: limitCheck.isSubscriber
+          }), 
+          { 
+            status: 429,
+            headers: { 'Content-Type': 'application/json' }
+          }
+        );
+      }
 
-    // Check Stripe-based message limits
-    const limitCheck = await checkMessageLimit(session.user.id);
-    
-    if (!limitCheck.canSend) {
-      return new Response(
-        JSON.stringify({ 
-          error: 'Message limit reached',
-          limitReached: true,
-          remainingMessages: limitCheck.remainingMessages,
-          isSubscriber: limitCheck.isSubscriber
-        }), 
-        { 
-          status: 429,
-          headers: { 'Content-Type': 'application/json' }
+      // Only load/save chat history for authenticated users
+      const chat = await getChatById({ id });
+
+      if (!chat) {
+        const title = await generateTitleFromUserMessage({
+          message,
+        });
+
+        await saveChat({
+          id,
+          userId: session.user.id,
+          title,
+          visibility: selectedVisibilityType,
+        });
+      } else {
+        if (chat.userId !== session.user.id) {
+          return new ChatSDKError('forbidden:chat').toResponse();
         }
-      );
-    }
-
-    const chat = await getChatById({ id });
-
-    if (!chat) {
-      const title = await generateTitleFromUserMessage({
-        message,
-      });
-
-      await saveChat({
-        id,
-        userId: session.user.id,
-        title,
-        visibility: selectedVisibilityType,
-      });
-    } else {
-      if (chat.userId !== session.user.id) {
-        return new ChatSDKError('forbidden:chat').toResponse();
       }
     }
 
-    const messagesFromDb = await getMessagesByChatId({ id });
+    // Load chat history only for authenticated users
+    const messagesFromDb = isGuest ? [] : await getMessagesByChatId({ id });
     const uiMessages = [...convertToUIMessages(messagesFromDb), message];
 
     const { longitude, latitude, city, country } = geolocation(request);
@@ -157,24 +162,26 @@ export async function POST(request: Request) {
       country,
     };
 
-    await saveMessages({
-      messages: [
-        {
-          chatId: id,
-          id: message.id,
-          role: 'user',
-          parts: message.parts,
-          attachments: [],
-          createdAt: new Date(),
-        },
-      ],
-    });
-
-    // const streamId = generateUUID();
-    // await createStreamId({ streamId, chatId: id });
-
+    // Generate streamId for all users (needed for streaming)
     const streamId = generateUUID();
-    await createStreamId({ streamId, chatId: id });
+    
+    // Save messages only for authenticated users
+    if (!isGuest) {
+      await saveMessages({
+        messages: [
+          {
+            chatId: id,
+            id: message.id,
+            role: 'user',
+            parts: message.parts,
+            attachments: [],
+            createdAt: new Date(),
+          },
+        ],
+      });
+
+      await createStreamId({ streamId, chatId: id });
+    }
 
     const stream = createUIMessageStream({
       execute: async ({ writer: dataStream }) => {
@@ -271,8 +278,27 @@ When using web search results, integrate them naturally with your core business 
           }
         }
 
+        // Create the model - handle gateway errors gracefully
+        let model;
+        try {
+          model = createDynamicModel(effectiveModelId);
+        } catch (error: any) {
+          console.error('Failed to create model:', error);
+          if (error.message?.includes('AI Gateway is not configured')) {
+            return new Response(
+              JSON.stringify({
+                code: 'bad_request:chat',
+                message: 'AI Gateway is not configured. Please set AI_GATEWAY_BASE_URL and AI_GATEWAY_API_KEY environment variables.',
+                cause: error.message,
+              }),
+              { status: 503, headers: { 'Content-Type': 'application/json' } }
+            );
+          }
+          throw error;
+        }
+
         const result = streamText({
-          model: createDynamicModel(effectiveModelId),
+          model,
           system: enhancedSystemPrompt,
           messages: convertToModelMessages(uiMessages),
           stopWhen: stepCountIs(5),
@@ -322,19 +348,22 @@ When using web search results, integrate them naturally with your core business 
       },
       generateId: generateUUID,
       onFinish: async ({ messages }) => {
-        await saveMessages({
-          messages: messages.map((message) => ({
-            id: message.id,
-            role: message.role,
-            parts: message.parts,
-            createdAt: new Date(),
-            attachments: [],
-            chatId: id,
-          })),
-        });
-        
-        // Record the message for Stripe-based limits
-        await recordMessage(session.user.id);
+        // Save assistant messages only for authenticated users
+        if (!isGuest) {
+          await saveMessages({
+            messages: messages.map((message) => ({
+              id: message.id,
+              role: message.role,
+              parts: message.parts,
+              createdAt: new Date(),
+              attachments: [],
+              chatId: id,
+            })),
+          });
+          
+          // Record the message for Stripe-based limits
+          await recordMessage(session.user.id);
+        }
       },
       onError: () => {
         return 'Oops, an error occurred!';

@@ -25,6 +25,14 @@ export interface GatewayModel {
   id: string;
   name: string;
   provider?: string;
+  modelType?: 'language' | 'embedding' | 'image-generation';
+  description?: string;
+  pricing?: {
+    input?: string;
+    output?: string;
+    cachedInputTokens?: string;
+    cacheCreationInputTokens?: string;
+  };
   specification?: {
     provider?: string;
     modelId?: string;

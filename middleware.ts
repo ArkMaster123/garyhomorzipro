@@ -24,13 +24,42 @@ export async function middleware(request: NextRequest) {
     secureCookie: !isDevelopmentEnvironment,
   });
 
+  // For API routes, return proper error responses instead of redirecting
+  if (pathname.startsWith('/api/')) {
+    // Allow public API routes (including guest chat access)
+    const publicApiRoutes = [
+      '/api/auth',
+      '/api/models',
+      '/api/ideator',
+      '/api/stripe',
+      '/api/chat',      // Allow guest access to chat with message limits
+      '/api/history',   // Allow guest access to history (will be empty for guests)
+    ];
+    
+    const isPublicApiRoute = publicApiRoutes.some(route => pathname.startsWith(route));
+    
+    if (isPublicApiRoute) {
+      return NextResponse.next();
+    }
+    
+    // For protected API routes without token, return 401 instead of redirect
+    if (!token) {
+      return NextResponse.json(
+        { code: 'unauthorized:api', message: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+    
+    return NextResponse.next();
+  }
+
   // Allow guest access to main pages, chat, and subscription page
   if (!token && (pathname === '/' || pathname.startsWith('/chat') || pathname.startsWith('/subscription'))) {
     return NextResponse.next();
   }
 
-  // Redirect unauthenticated users to sign-in for protected routes
-  if (!token && !pathname.startsWith('/sign-in') && !pathname.startsWith('/sign-up') && !pathname.startsWith('/guest-signin')) {
+  // Redirect unauthenticated users to sign-in for protected PAGE routes only (not API routes)
+  if (!token && !pathname.startsWith('/sign-in') && !pathname.startsWith('/sign-up') && !pathname.startsWith('/guest-signin') && !pathname.startsWith('/api/')) {
     return NextResponse.redirect(new URL('/sign-in', request.url));
   }
 

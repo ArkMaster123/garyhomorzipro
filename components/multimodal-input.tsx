@@ -107,20 +107,7 @@ function PureMultimodalInput({
   const usedTokens = Math.min(displayTokens, maxTokens); // Cap at max tokens
 
   // Debug logging
-  console.log('Debug - Input:', JSON.stringify(input), 'Length:', input?.length, 'Trimmed length:', input?.trim().length, 'Estimated tokens:', estimatedTokens, 'Display tokens:', displayTokens);
-  console.log('Debug - Context Props:', {
-    maxTokens,
-    contextLoading,
-    usedTokens: displayTokens,
-    modelId,
-    usage: {
-      inputTokens: displayTokens,
-      outputTokens: 0,
-      totalTokens: displayTokens,
-      cachedInputTokens: 0,
-      reasoningTokens: 0,
-    }
-  });
+  // Removed excessive debug logging that was flooding the console
 
   useEffect(() => {
     setIsClient(true);

@@ -4,7 +4,7 @@ import { knowledgeBase, knowledgeChunk } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { requireAdmin } from '@/lib/auth/admin';
 import { embed } from 'ai';
-import { gateway } from '@/lib/ai/gateway';
+import { gateway, isGatewayAvailable } from '@/lib/ai/gateway';
 
 // GET /api/admin/knowledge-base/[id] - Get specific knowledge base entry
 export async function GET(
@@ -112,6 +112,15 @@ export async function PUT(
 
     if (content !== undefined) {
       updateData.content = content;
+
+      // Check if gateway is available before regenerating embedding
+      if (!isGatewayAvailable() || !gateway) {
+        return NextResponse.json(
+          { success: false, error: 'AI Gateway not configured. Cannot update content with embedding.' },
+          { status: 503 }
+        );
+      }
+
       // Regenerate embedding using gateway
       const { embedding } = await embed({
         model: gateway.textEmbeddingModel(embeddingModel),

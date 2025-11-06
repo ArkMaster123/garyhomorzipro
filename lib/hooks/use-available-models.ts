@@ -5,11 +5,20 @@ const MAX_RETRIES = 3;
 const RETRY_DELAY_MILLIS = 5000;
 
 function buildModelList(models: GatewayModel[]): DisplayModel[] {
-  return models.map((model) => ({
-    id: model.id,
-    label: model.name,
-    provider: model.provider || model.specification?.provider || model.id.split('/')[0],
-  }));
+  return models.map((model) => {
+    // Extract provider from multiple possible sources
+    const provider = 
+      model.provider || 
+      model.specification?.provider || 
+      model.id.split('/')[0] || 
+      'other';
+    
+    return {
+      id: model.id,
+      label: model.name || model.id.split('/')[1] || model.id,
+      provider: provider.toLowerCase(), // Normalize to lowercase for consistent grouping
+    };
+  });
 }
 
 export function useAvailableModels() {
@@ -31,6 +40,17 @@ export function useAvailableModels() {
         if (!response.ok) {
           throw new Error("Failed to fetch models");
         }
+        
+        // Check content-type before parsing JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType?.includes('application/json')) {
+          const text = await response.text();
+          if (text.includes('<!DOCTYPE')) {
+            throw new Error("Authentication required - received HTML redirect");
+          }
+          throw new Error(`Expected JSON but received ${contentType || 'unknown content type'}`);
+        }
+        
         const data = await response.json();
         const newModels = buildModelList(data.models);
         setModels(newModels);

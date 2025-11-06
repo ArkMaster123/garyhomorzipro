@@ -27,6 +27,9 @@ export const SUPPORTED_MODELS = [
   "openai/gpt-4o-mini",     // Efficient multimodal
   "openai/gpt-4-turbo",     // High-performance
   "openai/gpt-3.5-turbo",   // Reliable workhorse
+  "openai/gpt-oss-120b",    // Default model - Excellent function calling! 🚀 (Served by Cerebras)
+  "openai/gpt-oss-20b",     // Efficient GPT-OSS model (Served by Cerebras)
+  "openai/gpt-oss-safeguard-20b", // Safety-focused GPT-OSS model (Served by Cerebras)
 
   // 🧠 Anthropic - Claude Family
   "anthropic/claude-opus-4.1",    // Latest Claude!
@@ -94,10 +97,10 @@ export const SUPPORTED_MODELS = [
 
   // 🏷️ Alibaba - Qwen Family
   "alibaba/qwen-3-235b",     // Massive model!
-  "alibaba/qwen-3-32b",      // Large model
+  "alibaba/qwen-3-32b",      // Large model (Served by Cerebras)
   "alibaba/qwen-3-30b",      // Large variant
   "alibaba/qwen-3-14b",      // Mid-size
-  "alibaba/qwen3-coder",     // Code specialist
+  "alibaba/qwen3-coder",     // Code specialist (Served by Cerebras)
 
   // ☁️ Amazon - Nova Family
   "amazon/nova-pro",         // Advanced Nova
@@ -117,4 +120,9 @@ export const SUPPORTED_MODELS = [
   "zai/glm-4.5",            // GLM model
   "zai/glm-4.5v",           // GLM vision
   "vercel/v0-1.5-md",       // Vercel v0 latest
+  
+  // 🧠 Meta - Llama Models (Some served by Cerebras)
+  "meta/llama-4-scout",      // Llama 4 Scout (Served by Cerebras)
+  "meta/llama-3.1-8b",       // Llama 3.1 8B (Served by Cerebras)
+  "meta/llama-3.3-70b",      // Llama 3.3 70B (Served by Cerebras)
 ];

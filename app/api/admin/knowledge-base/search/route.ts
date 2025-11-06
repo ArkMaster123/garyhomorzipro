@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { knowledgeBase, knowledgeChunk } from '@/lib/db/schema';
 import { embed } from 'ai';
-import { gateway } from '@/lib/ai/gateway';
+import { gateway, isGatewayAvailable } from '@/lib/ai/gateway';
 import { eq, and, desc } from 'drizzle-orm';
 import { requireAdmin } from '@/lib/auth/admin';
 
@@ -28,6 +28,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, error: 'Missing required fields: query, personaId' },
         { status: 400 }
+      );
+    }
+
+    // Check if gateway is available
+    if (!isGatewayAvailable() || !gateway) {
+      return NextResponse.json(
+        { error: 'AI Gateway not configured. Cannot perform knowledge base search.' },
+        { status: 503 }
       );
     }
 

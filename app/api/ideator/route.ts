@@ -1,6 +1,6 @@
 import { generateText } from 'ai';
 import { z } from 'zod';
-import { gateway } from '@/lib/ai/gateway';
+import { gateway, isGatewayAvailable } from '@/lib/ai/gateway';
 import { webSearch } from '@/lib/ai/tools/web-search';
 
 // Input validation schema

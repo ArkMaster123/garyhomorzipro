@@ -60,6 +60,7 @@ const getProviderIcon = (provider: string, className?: string) => {
     case 'meta': return <Meta {...iconProps} />;
     case 'amazon': return <Aws {...iconProps} />;
     case 'cohere': return <Cohere {...iconProps} />;
+    case 'cerebras': return <Aws {...iconProps} />; // Use AWS icon as placeholder for Cerebras
     // Fallback for providers without specific icons - use a generic one
     default: return <OpenAI {...iconProps} style={{ opacity: 0.5 }} />;
   }
@@ -96,9 +97,31 @@ export function ProviderSelector({
     
     const groupMap = new Map<string, DisplayModel[]>();
     
+    // All models served by Cerebras (from AI Gateway models page)
+    // These models are served by Cerebras even though they have different prefixes
+    const CEREBRAS_MODELS = [
+      'openai/gpt-oss-120b',
+      'openai/gpt-oss-20b',
+      'openai/gpt-oss-safeguard-20b',
+      'alibaba/qwen3-coder',
+      'meta/llama-4-scout',
+      'alibaba/qwen-3-32b',
+      'meta/llama-3.1-8b',
+      'meta/llama-3.3-70b',
+    ];
+    
     filteredModels.forEach((model) => {
-      const provider = model.provider || model.id.split('/')[0] || 'Other';
-      const providerName = provider.charAt(0).toUpperCase() + provider.slice(1);
+      let provider = (model.provider || model.id.split('/')[0] || 'other').toLowerCase();
+      
+      // Special case: GPT-OSS models are served by Cerebras
+      if (CEREBRAS_MODELS.includes(model.id)) {
+        provider = 'cerebras';
+      }
+      
+      // Capitalize provider name properly (handle special cases like xai -> xAI)
+      const providerName = provider === 'xai' ? 'xAI' 
+        : provider === 'meta' ? 'Meta'
+        : provider.charAt(0).toUpperCase() + provider.slice(1);
       
       if (!groupMap.has(providerName)) {
         groupMap.set(providerName, []);
@@ -106,10 +129,32 @@ export function ProviderSelector({
       groupMap.get(providerName)!.push(model);
     });
 
-    return Array.from(groupMap.entries()).map(([name, models]) => ({
-      name,
-      models: models.sort((a, b) => a.label.localeCompare(b.label))
-    })).sort((a, b) => a.name.localeCompare(b.name));
+    // Priority order for important providers (appear first)
+    const PROVIDER_PRIORITY: Record<string, number> = {
+      'Openai': 1,
+      'Anthropic': 2,
+      'Cerebras': 3,
+      'Groq': 4,
+      'Xai': 5,
+      'Google': 6,
+      'Deepseek': 7,
+      'Mistral': 8,
+    };
+    
+    return Array.from(groupMap.entries())
+      .map(([name, models]) => ({
+        name,
+        models: models.sort((a, b) => a.label.localeCompare(b.label)),
+        priority: PROVIDER_PRIORITY[name] ?? 999, // Unlisted providers go to end
+      }))
+      .sort((a, b) => {
+        // Sort by priority first, then alphabetically
+        if (a.priority !== b.priority) {
+          return a.priority - b.priority;
+        }
+        return a.name.localeCompare(b.name);
+      })
+      .map(({ name, models }) => ({ name, models })); // Remove priority from final output
   }, [models, searchQuery]);
 
   // Find the selected model
@@ -158,9 +203,9 @@ export function ProviderSelector({
           <ChevronDownIcon />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="min-w-[350px] max-h-[450px] p-0">
+      <DropdownMenuContent align="start" className="min-w-[400px] max-h-[600px] p-0">
         {/* Cute Search Box */}
-        <div className="p-3 border-b">
+        <div className="p-3 border-b sticky top-0 bg-background z-10">
           <div className="relative">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
@@ -173,7 +218,7 @@ export function ProviderSelector({
           </div>
         </div>
 
-        <div className="max-h-[350px] overflow-y-auto">
+        <div className="max-h-[500px] overflow-y-auto">
           {isLoading && (
             <DropdownMenuItem disabled>
               <div className="flex items-center gap-2">

@@ -65,8 +65,17 @@ export function createDynamicModel(modelId: string) {
     return myProvider.languageModel(modelId);
   }
   
+  // Check if gateway is available
+  if (!gatewayProvider) {
+    throw new Error(
+      'AI Gateway is not configured. Please set AI_GATEWAY_BASE_URL and AI_GATEWAY_API_KEY environment variables.'
+    );
+  }
+  
   // Handle gateway models
   if (modelId.includes('/')) {
+    // Call the gateway provider directly (not .languageModel)
+    // The gateway provider is already a function that creates language models
     const baseModel = gatewayProvider(modelId);
     
     // Check if this model supports reasoning

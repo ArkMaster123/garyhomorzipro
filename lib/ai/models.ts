@@ -70,14 +70,19 @@ export const PROVIDER_GROUPS = {
   'Cohere': [
     'cohere/command-r-plus', 'cohere/command-r', 'cohere/command-a'
   ],
+  'Cerebras': [
+    'openai/gpt-oss-120b',      // GPT-OSS 120B - Excellent function calling! 🚀
+    'openai/gpt-oss-20b',        // GPT-OSS 20B - Efficient model
+    'openai/gpt-oss-safeguard-20b' // GPT-OSS Safeguard 20B - Safety-focused
+  ],
   'Other': [
     'moonshotai/kimi-k2', 'morph/morph-v3-large', 'morph/morph-v3-fast',
     'inception/mercury-coder-small', 'zai/glm-4.5', 'zai/glm-4.5v', 'vercel/v0-1.5-md'
   ]
 };
 
-// Default gateway model - Using Cerebras GPT-OSS-120B for excellent function calling and generalist capabilities! 🚀
-export const DEFAULT_GATEWAY_MODEL = "cerebras/gpt-oss-120b";
+// Default gateway model - Using OpenAI GPT-OSS-120B for excellent function calling and generalist capabilities! 🚀
+export const DEFAULT_GATEWAY_MODEL = "openai/gpt-oss-120b";
 
 // Image generation models configuration
 export const IMAGE_GENERATION_MODELS = {

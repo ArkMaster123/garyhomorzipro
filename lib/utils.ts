@@ -19,8 +19,39 @@ export const fetcher = async (url: string) => {
   const response = await fetch(url);
 
   if (!response.ok) {
-    const { code, cause } = await response.json();
-    throw new ChatSDKError(code as ErrorCode, cause);
+    // Check content-type before parsing JSON
+    const contentType = response.headers.get('content-type');
+    
+    if (contentType?.includes('application/json')) {
+      try {
+        const { code, cause } = await response.json();
+        throw new ChatSDKError(code as ErrorCode, cause);
+      } catch (error) {
+        // If JSON parsing fails, check if it's a redirect
+        if (response.status === 307 || response.status === 302) {
+          throw new ChatSDKError('unauthorized:api', 'Authentication required');
+        }
+        throw error;
+      }
+    } else {
+      // Non-JSON response (likely HTML redirect)
+      const text = await response.text();
+      if (response.status === 307 || response.status === 302 || text.includes('<!DOCTYPE')) {
+        throw new ChatSDKError('unauthorized:api', 'Authentication required');
+      }
+      throw new ChatSDKError('bad_request:api', `HTTP ${response.status}: ${response.statusText}`);
+    }
+  }
+
+  // Check content-type for successful responses too
+  const contentType = response.headers.get('content-type');
+  if (!contentType?.includes('application/json')) {
+    const text = await response.text();
+    // If we got HTML instead of JSON, it's likely a redirect
+    if (text.includes('<!DOCTYPE')) {
+      throw new ChatSDKError('unauthorized:api', 'Authentication required');
+    }
+    throw new ChatSDKError('bad_request:api', 'Expected JSON response but received non-JSON content');
   }
 
   return response.json();
@@ -34,14 +65,46 @@ export async function fetchWithErrorHandlers(
     const response = await fetch(input, init);
 
     if (!response.ok) {
-      const { code, cause } = await response.json();
-      throw new ChatSDKError(code as ErrorCode, cause);
+      // Try to parse as JSON, but handle non-JSON responses
+      let errorData;
+      const contentType = response.headers.get('content-type');
+      
+      if (contentType?.includes('application/json')) {
+        try {
+          errorData = await response.json();
+        } catch {
+          // If JSON parsing fails, create a generic error
+          errorData = {
+            code: `http_${response.status}`,
+            message: `HTTP ${response.status}: ${response.statusText}`,
+          };
+        }
+      } else {
+        // For non-JSON responses (like HTML), read text and create error
+        const text = await response.text();
+        errorData = {
+          code: `http_${response.status}`,
+          message: text.substring(0, 200) || `HTTP ${response.status}: ${response.statusText}`,
+        };
+      }
+      
+      const { code, message, cause } = errorData;
+      throw new ChatSDKError((code as ErrorCode) || 'bad_request:chat', message || cause);
     }
 
     return response;
   } catch (error: unknown) {
+    if (error instanceof ChatSDKError) {
+      throw error;
+    }
+    
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
       throw new ChatSDKError('offline:chat');
+    }
+
+    // Wrap unknown errors
+    if (error instanceof Error) {
+      throw new ChatSDKError('bad_request:chat', error.message);
     }
 
     throw error;
