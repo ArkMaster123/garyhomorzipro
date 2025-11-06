@@ -73,20 +73,22 @@ export function SidebarUserNav({ user }: { user: User }) {
             className="w-[--radix-popper-anchor-width]"
           >
             {/* Profile Section */}
-            <DropdownMenuItem asChild>
-              <Link href="/profile" className="flex items-center cursor-pointer">
-                <UserIcon className="mr-2 h-4 w-4" />
-                My Profile & Subscription
-              </Link>
+            <DropdownMenuItem 
+              className="cursor-pointer"
+              onSelect={() => router.push('/profile')}
+            >
+              <UserIcon className="mr-2 h-4 w-4" />
+              My Profile & Subscription
             </DropdownMenuItem>
             
             {/* Subscription Management */}
             {!isGuest && (
-              <DropdownMenuItem asChild>
-                <Link href="/profile" className="flex items-center cursor-pointer">
-                  <Crown className="mr-2 h-4 w-4" />
-                  Manage Subscription
-                </Link>
+              <DropdownMenuItem 
+                className="cursor-pointer"
+                onSelect={() => router.push('/subscription')}
+              >
+                <Crown className="mr-2 h-4 w-4" />
+                Manage Subscription
               </DropdownMenuItem>
             )}
             
