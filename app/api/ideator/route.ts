@@ -55,6 +55,14 @@ const feasibilityCardSchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    // Check if gateway is available
+    if (!isGatewayAvailable() || !gateway) {
+      return Response.json(
+        { success: false, error: 'AI Gateway not configured. Cannot process ideator request.' },
+        { status: 503 }
+      );
+    }
+
     // Parse and validate request
     const body = await request.json();
     const { title, description, pathway, userEmail, userName } = ideatorRequestSchema.parse(body);
@@ -229,8 +237,9 @@ REQUIRED JSON STRUCTURE:
 
 Remember: Respond with ONLY the JSON object, no markdown, no explanations.`;
 
+    // Non-null assertion is safe here because we checked gateway at the start
     const { text } = await generateText({
-      model: gateway('openai/gpt-oss-120b'),
+      model: gateway!('openai/gpt-oss-120b'),
       system: systemPrompt,
       prompt: userPrompt,
 

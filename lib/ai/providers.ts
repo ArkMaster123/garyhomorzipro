@@ -3,7 +3,7 @@ import {
   extractReasoningMiddleware,
   wrapLanguageModel,
 } from 'ai';
-import { gateway } from '@ai-sdk/gateway';
+import { gateway as aiGateway } from '@ai-sdk/gateway';
 import { gateway as gatewayProvider } from './gateway';
 import {
   artifactModel,
@@ -27,13 +27,13 @@ export const myProvider = isTestEnvironment
   : customProvider({
       languageModels: {
         // Legacy internal models
-        'chat-model': gateway('xai/grok-2-vision-1212'),
+        'chat-model': aiGateway('xai/grok-2-vision-1212'),
         'chat-model-reasoning': wrapLanguageModel({
-          model: gateway('xai/grok-3-mini-beta'),
+          model: aiGateway('xai/grok-3-mini-beta'),
           middleware: extractReasoningMiddleware({ tagName: 'think' }),
         }),
-        'title-model': gateway('xai/grok-2-1212'),
-        'artifact-model': gateway('xai/grok-2-1212'),
+        'title-model': aiGateway('xai/grok-2-1212'),
+        'artifact-model': aiGateway('xai/grok-2-1212'),
       },
     });
 
