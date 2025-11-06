@@ -40,16 +40,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Convert model string to AI SDK model object using gateway
+    // Non-null assertion is safe here because we checked gateway above
     const getEmbeddingModel = (modelString: string) => {
       switch (modelString) {
         case 'openai:text-embedding-3-small':
-          return gateway.textEmbeddingModel('openai/text-embedding-3-small');
+          return gateway!.textEmbeddingModel('openai/text-embedding-3-small');
         case 'openai:text-embedding-3-large':
-          return gateway.textEmbeddingModel('openai/text-embedding-3-large');
+          return gateway!.textEmbeddingModel('openai/text-embedding-3-large');
         case 'openai:text-embedding-ada-002':
-          return gateway.textEmbeddingModel('openai/text-embedding-ada-002');
+          return gateway!.textEmbeddingModel('openai/text-embedding-ada-002');
         default:
-          return gateway.textEmbeddingModel('openai/text-embedding-3-small'); // fallback
+          return gateway!.textEmbeddingModel('openai/text-embedding-3-small'); // fallback
       }
     };
 
