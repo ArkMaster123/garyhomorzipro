@@ -312,10 +312,10 @@ When using web search results, integrate them naturally with your core business 
             getWeather,
             // webSearch, // Disabled - using enhancedWebSearch instead
             enhancedWebSearch,
-            createDocument: createDocument({ session, dataStream }),
-            updateDocument: updateDocument({ session, dataStream }),
+            createDocument: createDocument({ session: session!, dataStream }),
+            updateDocument: updateDocument({ session: session!, dataStream }),
             requestSuggestions: requestSuggestions({
-              session,
+              session: session!,
               dataStream,
             }),
             generateImage,
