@@ -285,14 +285,7 @@ When using web search results, integrate them naturally with your core business 
         } catch (error: any) {
           console.error('Failed to create model:', error);
           if (error.message?.includes('AI Gateway is not configured')) {
-            return new Response(
-              JSON.stringify({
-                code: 'bad_request:chat',
-                message: 'AI Gateway is not configured. Please set AI_GATEWAY_BASE_URL and AI_GATEWAY_API_KEY environment variables.',
-                cause: error.message,
-              }),
-              { status: 503, headers: { 'Content-Type': 'application/json' } }
-            );
+            throw new Error('AI Gateway is not configured. Please set AI_GATEWAY_BASE_URL and AI_GATEWAY_API_KEY environment variables.');
           }
           throw error;
         }
