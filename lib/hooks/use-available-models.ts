@@ -3,6 +3,27 @@ import type { DisplayModel, GatewayModel } from "@/lib/types/providers";
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY_MILLIS = 5000;
+const SEEN_MODELS_STORAGE_KEY = 'seen_models';
+
+// Helper functions for localStorage
+function getSeenModels(): Set<string> {
+  if (typeof window === 'undefined') return new Set();
+  try {
+    const stored = localStorage.getItem(SEEN_MODELS_STORAGE_KEY);
+    return new Set(stored ? JSON.parse(stored) : []);
+  } catch {
+    return new Set();
+  }
+}
+
+function saveSeenModels(modelIds: string[]): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(SEEN_MODELS_STORAGE_KEY, JSON.stringify(modelIds));
+  } catch (error) {
+    console.error('Failed to save seen models:', error);
+  }
+}
 
 function buildModelList(models: GatewayModel[]): DisplayModel[] {
   return models.map((model) => {
@@ -23,6 +44,7 @@ function buildModelList(models: GatewayModel[]): DisplayModel[] {
 
 export function useAvailableModels() {
   const [models, setModels] = useState<DisplayModel[]>([]);
+  const [newModelIds, setNewModelIds] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [retryCount, setRetryCount] = useState(0);
@@ -53,6 +75,24 @@ export function useAvailableModels() {
         
         const data = await response.json();
         const newModels = buildModelList(data.models);
+        
+        // Compare with previously seen models to detect new ones
+        const seenModels = getSeenModels();
+        const currentModelIds = newModels.map(m => m.id);
+        const newIds = currentModelIds.filter(id => !seenModels.has(id));
+        
+        // Update seen models list (add new ones)
+        if (newIds.length > 0) {
+          const updatedSeen = new Set([...seenModels, ...newIds]);
+          saveSeenModels(Array.from(updatedSeen));
+          setNewModelIds(new Set(newIds));
+        } else {
+          setNewModelIds(new Set());
+        }
+        
+        // Always update seen models to include all current models
+        saveSeenModels(currentModelIds);
+        
         setModels(newModels);
         setError(null);
         setRetryCount(0);
@@ -85,5 +125,11 @@ export function useAvailableModels() {
     }
   }, [retryCount, fetchModels]);
 
-  return { models, isLoading, error, refetch: () => fetchModels(false) };
+  return { 
+    models, 
+    isLoading, 
+    error, 
+    newModelIds,
+    refetch: () => fetchModels(false) 
+  };
 }

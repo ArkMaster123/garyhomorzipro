@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { CheckCircleFillIcon, ChevronDownIcon } from './icons';
 import { Search } from 'lucide-react';
 import { useAvailableModels } from '@/lib/hooks/use-available-models';
+import { Badge } from '@/components/ui/badge';
 import type { DisplayModel, ProviderGroup } from '@/lib/types/providers';
 import { DEFAULT_GATEWAY_MODEL } from '@/lib/ai/models';
 // Import Lobe Icons for provider logos
@@ -78,7 +79,7 @@ export function ProviderSelector({
   const [open, setOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [optimisticModelId, setOptimisticModelId] = useOptimistic(selectedModelId);
-  const { models, isLoading, error } = useAvailableModels();
+  const { models, isLoading, error, newModelIds } = useAvailableModels();
 
   // Group models by provider with search filtering
   const providerGroups = useMemo<ProviderGroup[]>(() => {
@@ -196,10 +197,18 @@ export function ProviderSelector({
         <Button
           data-testid="provider-selector"
           variant="outline"
-          className="md:px-2 md:h-[34px]"
+          className="md:px-2 md:h-[34px] relative"
           disabled={isLoading || !!error}
         >
           {displayName}
+          {newModelIds.size > 0 && (
+            <Badge 
+              variant="default" 
+              className="ml-2 h-5 px-1.5 text-[10px] bg-green-500 hover:bg-green-600 animate-pulse"
+            >
+              {newModelIds.size} new
+            </Badge>
+          )}
           <ChevronDownIcon />
         </Button>
       </DropdownMenuTrigger>
@@ -219,6 +228,16 @@ export function ProviderSelector({
         </div>
 
         <div className="max-h-[500px] overflow-y-auto">
+          {!isLoading && !error && newModelIds.size > 0 && (
+            <div className="px-3 py-2 bg-green-50 dark:bg-green-950 border-b">
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-green-700 dark:text-green-300 font-medium">
+                  ✨ {newModelIds.size} new model{newModelIds.size !== 1 ? 's' : ''} available!
+                </span>
+              </div>
+            </div>
+          )}
+          
           {isLoading && (
             <DropdownMenuItem disabled>
               <div className="flex items-center gap-2">
@@ -265,8 +284,13 @@ export function ProviderSelector({
                   className="gap-4 group/item flex flex-row justify-between items-center w-full"
                 >
                   <div className="flex flex-col gap-1 items-start">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <div className="text-sm font-medium">{model.label}</div>
+                      {newModelIds.has(model.id) && (
+                        <span className="text-xs bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-1.5 py-0.5 rounded-md font-medium animate-pulse">
+                          ✨ New
+                        </span>
+                      )}
                       {isReasoningModel(model.id) && (
                         <span className="text-xs bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 px-1.5 py-0.5 rounded-md font-medium">
                           🧠 Reasoning
