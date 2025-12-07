@@ -330,11 +330,29 @@ const LandingPage: React.FC = () => {
                 
                 <div className="pt-12">
                   <div className="flex -space-x-4">
-                    <img key={0} src="/avatar-1.png" alt="Founder 1" width={40} height={40} className="rounded-full border-2 border-[#0B1121] w-10 h-10 object-cover" />
+                    <div className="relative w-10 h-10 rounded-full border-2 border-background dark:border-[#0B1121] overflow-hidden bg-muted dark:bg-[#1E293B]">
+                      <Image 
+                        src="/avatar-1.png" 
+                        alt="Founder 1" 
+                        width={40} 
+                        height={40} 
+                        className="object-cover w-full h-full"
+                        unoptimized
+                      />
+                    </div>
                     {[...Array(4)].map((_, i) => (
-                      <img key={i + 1} src={`/avatar-${i + 2}.svg`} alt={`Founder ${i + 2}`} width={40} height={40} className="rounded-full border-2 border-[#0B1121] w-10 h-10 object-cover" />
+                      <div key={i + 1} className="relative w-10 h-10 rounded-full border-2 border-background dark:border-[#0B1121] overflow-hidden bg-muted dark:bg-[#1E293B]">
+                        <Image 
+                          src={`/avatar-${i + 2}.svg`} 
+                          alt={`Founder ${i + 2}`} 
+                          width={40} 
+                          height={40} 
+                          className="object-cover w-full h-full"
+                          unoptimized
+                        />
+                      </div>
                     ))}
-                    <div className="w-10 h-10 rounded-full bg-[#1E293B] border-2 border-[#2D3B4F] flex items-center justify-center text-sm text-white">
+                    <div className="w-10 h-10 rounded-full bg-muted dark:bg-[#1E293B] border-2 border-background dark:border-[#2D3B4F] flex items-center justify-center text-sm text-foreground dark:text-white z-10">
                       +15
                     </div>
                   </div>
