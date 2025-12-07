@@ -69,6 +69,7 @@ const LandingPage: React.FC = () => {
   const [hoveredStep, setHoveredStep] = useState<number | null>(null)
   const [theme, setTheme] = useState<'light' | 'dark'>('dark')
   const [hoveredFeature, setHoveredFeature] = useState<number | null>(null);
+  const [avatar1Src, setAvatar1Src] = useState('/avatar-1.svg');
 
   useEffect(() => {
     const root = window.document.documentElement
@@ -331,24 +332,27 @@ const LandingPage: React.FC = () => {
                 <div className="pt-12">
                   <div className="flex -space-x-4">
                     <div className="relative w-10 h-10 rounded-full border-2 border-background dark:border-[#0B1121] overflow-hidden bg-muted dark:bg-[#1E293B]">
-                      <Image 
-                        src="/avatar-1.png" 
+                      <img 
+                        src={avatar1Src} 
                         alt="Founder 1" 
                         width={40} 
                         height={40} 
                         className="object-cover w-full h-full"
-                        unoptimized
+                        onError={() => {
+                          if (avatar1Src === '/avatar-1.svg') {
+                            setAvatar1Src('/avatar-1.png');
+                          }
+                        }}
                       />
                     </div>
                     {[...Array(4)].map((_, i) => (
                       <div key={i + 1} className="relative w-10 h-10 rounded-full border-2 border-background dark:border-[#0B1121] overflow-hidden bg-muted dark:bg-[#1E293B]">
-                        <Image 
+                        <img 
                           src={`/avatar-${i + 2}.svg`} 
                           alt={`Founder ${i + 2}`} 
                           width={40} 
                           height={40} 
                           className="object-cover w-full h-full"
-                          unoptimized
                         />
                       </div>
                     ))}
