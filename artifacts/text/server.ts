@@ -19,7 +19,7 @@ export const textDocumentHandler = createDocumentHandler<'text'>({
     for await (const delta of fullStream) {
       const { type } = delta;
 
-      if (type === 'text') {
+      if (type === 'text-delta') {
         const { text } = delta;
 
         draftContent += text;
@@ -58,7 +58,7 @@ export const textDocumentHandler = createDocumentHandler<'text'>({
     for await (const delta of fullStream) {
       const { type } = delta;
 
-      if (type === 'text') {
+      if (type === 'text-delta') {
         const { text } = delta;
 
         draftContent += text;

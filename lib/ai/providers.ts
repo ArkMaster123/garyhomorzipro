@@ -5,14 +5,16 @@ import {
 } from 'ai';
 import { gateway as aiGateway } from '@ai-sdk/gateway';
 import { gateway as gatewayProvider } from './gateway';
+import { isTestEnvironment } from '../constants';
+import { DEFAULT_GATEWAY_MODEL } from './models';
+
+// Import test models - will be replaced with stub in production builds via webpack alias
 import {
   artifactModel,
   chatModel,
   reasoningModel,
   titleModel,
 } from './models.test';
-import { isTestEnvironment } from '../constants';
-import { DEFAULT_GATEWAY_MODEL } from './models';
 
 // Create dynamic provider that can handle both internal models and gateway models
 export const myProvider = isTestEnvironment
