@@ -3,6 +3,9 @@ import {
   extractReasoningMiddleware,
   wrapLanguageModel,
 } from 'ai';
+// Note: @ai-sdk/devtools requires AI SDK 6 (V3 models), but we're on AI SDK 5 (V2)
+// This will work properly when upgrading to AI SDK 6
+import { devToolsMiddleware } from '@ai-sdk/devtools';
 import { gateway as aiGateway } from '@ai-sdk/gateway';
 import { gateway as gatewayProvider } from './gateway';
 import { isTestEnvironment } from '../constants';
@@ -16,6 +19,41 @@ import {
   titleModel,
 } from './models.test';
 
+// Helper function to wrap models with devtools middleware in development
+// Note: @ai-sdk/devtools requires AI SDK 6 (V3 models), but we're on AI SDK 5 (V2)
+// This will work properly when upgrading to AI SDK 6
+function wrapModelWithDevtools<T extends Parameters<typeof wrapLanguageModel>[0]['model']>(
+  model: T,
+  additionalMiddlewares: Parameters<typeof wrapLanguageModel>[0]['middleware'][] = []
+): T | ReturnType<typeof wrapLanguageModel> {
+  const middlewares: Parameters<typeof wrapLanguageModel>[0]['middleware'][] = [];
+  
+  // Add devtools middleware in development (requires AI SDK 6)
+  if (process.env.NODE_ENV === 'development') {
+    try {
+      // @ts-expect-error - Type mismatch between V2 and V3 middleware
+      middlewares.push(devToolsMiddleware());
+    } catch (error) {
+      // Silently fail if devtools not compatible
+      console.warn('DevTools middleware not available (requires AI SDK 6)');
+    }
+  }
+  
+  // Add any additional middlewares
+  middlewares.push(...additionalMiddlewares);
+  
+  // Only wrap if we have middlewares to apply
+  if (middlewares.length > 0) {
+    return wrapLanguageModel({
+      model,
+      // @ts-expect-error - Middleware types may not match exactly between versions
+      middleware: middlewares,
+    });
+  }
+  
+  return model;
+}
+
 // Create dynamic provider that can handle both internal models and gateway models
 export const myProvider = isTestEnvironment
   ? customProvider({
@@ -28,14 +66,15 @@ export const myProvider = isTestEnvironment
     })
   : customProvider({
       languageModels: {
-        // Legacy internal models
-        'chat-model': aiGateway('xai/grok-2-vision-1212'),
-        'chat-model-reasoning': wrapLanguageModel({
-          model: aiGateway('xai/grok-3-mini-beta'),
-          middleware: extractReasoningMiddleware({ tagName: 'think' }),
-        }),
-        'title-model': aiGateway('xai/grok-2-1212'),
-        'artifact-model': aiGateway('xai/grok-2-1212'),
+        // Legacy internal models - wrapped with devtools in development
+        // Using correct AI Gateway model IDs (without version suffixes)
+        'chat-model': wrapModelWithDevtools(aiGateway('xai/grok-2-vision')),
+        'chat-model-reasoning': wrapModelWithDevtools(
+          aiGateway('xai/grok-3-mini'),
+          [extractReasoningMiddleware({ tagName: 'think' })]
+        ),
+        'title-model': wrapModelWithDevtools(aiGateway('xai/grok-2')),
+        'artifact-model': wrapModelWithDevtools(aiGateway('xai/grok-2')),
       },
     });
 
@@ -80,14 +119,34 @@ export function createDynamicModel(modelId: string) {
     // The gateway provider is already a function that creates language models
     const baseModel = gatewayProvider(modelId);
     
+    // Build middleware array
+    const middlewares: Parameters<typeof wrapLanguageModel>[0]['middleware'][] = [];
+    
+    // Add devtools middleware in development (requires AI SDK 6)
+    if (process.env.NODE_ENV === 'development') {
+      try {
+        // @ts-expect-error - Type mismatch: devtools requires AI SDK 6 (V3), we're on AI SDK 5 (V2)
+        middlewares.push(devToolsMiddleware());
+      } catch (error) {
+        // Silently fail if devtools not compatible
+        console.warn('DevTools middleware not available (requires AI SDK 6)');
+      }
+    }
+    
     // Check if this model supports reasoning
     if (REASONING_MODELS.includes(modelId)) {
       console.log(`🧠 Enabling reasoning for model: ${modelId}`);
+      middlewares.push(extractReasoningMiddleware({ 
+        tagName: 'think' // Standard reasoning tag
+      }));
+    }
+    
+    // Apply middlewares if any
+    if (middlewares.length > 0) {
       return wrapLanguageModel({
         model: baseModel,
-        middleware: extractReasoningMiddleware({ 
-          tagName: 'think' // Standard reasoning tag
-        }),
+        // @ts-expect-error - Middleware types may not match exactly between versions
+        middleware: middlewares,
       });
     }
     
@@ -98,11 +157,31 @@ export function createDynamicModel(modelId: string) {
   console.warn(`Unknown model ID: ${modelId}, falling back to default`);
   const fallbackModel = gatewayProvider(DEFAULT_GATEWAY_MODEL);
   
+  // Build middleware array for fallback
+  const fallbackMiddlewares: Parameters<typeof wrapLanguageModel>[0]['middleware'][] = [];
+  
+  // Add devtools middleware in development (requires AI SDK 6)
+  if (process.env.NODE_ENV === 'development') {
+    try {
+      // @ts-expect-error - Type mismatch: devtools requires AI SDK 6 (V3), we're on AI SDK 5 (V2)
+      fallbackMiddlewares.push(devToolsMiddleware());
+    } catch (error) {
+      // Silently fail if devtools not compatible
+      console.warn('DevTools middleware not available (requires AI SDK 6)');
+    }
+  }
+  
   // Also check if fallback model supports reasoning
   if (REASONING_MODELS.includes(DEFAULT_GATEWAY_MODEL)) {
+    fallbackMiddlewares.push(extractReasoningMiddleware({ tagName: 'think' }));
+  }
+  
+  // Apply middlewares if any
+  if (fallbackMiddlewares.length > 0) {
     return wrapLanguageModel({
       model: fallbackModel,
-      middleware: extractReasoningMiddleware({ tagName: 'think' }),
+      // @ts-expect-error - Middleware types may not match exactly between versions
+      middleware: fallbackMiddlewares,
     });
   }
   

@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@ai-sdk/devtools':
+        specifier: 0.0.1-beta.3
+        version: 0.0.1-beta.3
       '@ai-sdk/gateway':
         specifier: ^1.0.11
         version: 1.0.11(zod@3.25.76)
@@ -345,6 +348,10 @@ importers:
 
 packages:
 
+  '@ai-sdk/devtools@0.0.1-beta.3':
+    resolution: {integrity: sha512-P9NXPrtR6ektXztjZo4KrBgJHMV5yykjKgUG7dma0mtj7Dn4c7WkMR01cmnI452LYtTDpd4g09FMPDsAFd8nvg==}
+    hasBin: true
+
   '@ai-sdk/gateway@1.0.11':
     resolution: {integrity: sha512-ErwWS3sPOuWy42eE3AVxlKkTa1XjjKBEtNCOylVKMO5KNyz5qie8QVlLYbULOG56dtxX4zTKX3rQNJudplhcmQ==}
     engines: {node: '>=18'}
@@ -389,6 +396,10 @@ packages:
 
   '@ai-sdk/provider@2.0.0':
     resolution: {integrity: sha512-6o7Y2SeO9vFKB8lArHXehNuusnpddKPk7xqL7T2/b+OvXMRIXUO1rR4wcv1hAFUAT9avGZshty3Wlua/XA7TvA==}
+    engines: {node: '>=18'}
+
+  '@ai-sdk/provider@3.0.0-beta.28':
+    resolution: {integrity: sha512-5crmciF/oXr1xJExIi81LFqyebWoUnyQoILqT9yiOp1jNhjl2OYTOd8rm2zx7UBi0OZ05TI/rNqieXnJSwhheQ==}
     engines: {node: '>=18'}
 
   '@ai-sdk/react@2.0.117':
@@ -1388,6 +1399,12 @@ packages:
   '@google/generative-ai@0.24.1':
     resolution: {integrity: sha512-MqO+MLfM6kjxcKoy0p1wRzG3b4ZZXtPI+z2IE26UogS2Cm/XHO+7gGRBh6gcJsOiIVoH93UwKvW4HdgiOZCy9Q==}
     engines: {node: '>=18.0.0'}
+
+  '@hono/node-server@1.19.7':
+    resolution: {integrity: sha512-vUcD0uauS7EU2caukW8z5lJKtoGMokxNbJtBiwHgpqxEXokaHCBkQUmCHhjFB1VUTWdqj25QoMkMKzgjq+uhrw==}
+    engines: {node: '>=18.14.1'}
+    peerDependencies:
+      hono: ^4
 
   '@humanwhocodes/config-array@0.13.0':
     resolution: {integrity: sha512-DZLEEqFWQFiyK6h5YIeynKx7JlvCYWL0cImfSRXZ9l4Sg2efkFGTuFf6vzXjK1cq6IYkU+Eg/JizXw+TD2vRNw==}
@@ -4442,6 +4459,10 @@ packages:
   hoist-non-react-statics@3.3.2:
     resolution: {integrity: sha512-/gGivxi8JPKWNm/W0jSmzcMPpfpPLc3dY/6GxhX2hQ9iGj3aDfklV4ET7NjKpSinLpJ5vafa9iiGIEZg10SfBw==}
 
+  hono@4.11.1:
+    resolution: {integrity: sha512-KsFcH0xxHes0J4zaQgWbYwmz3UPOOskdqZmItstUG93+Wk1ePBLkLGwbP9zlmh1BFUiL8Qp+Xfu9P7feJWpGNg==}
+    engines: {node: '>=16.9.0'}
+
   html-url-attributes@3.0.1:
     resolution: {integrity: sha512-ol6UPyBWqsrO6EJySPz2O7ZSr856WDrEzM5zMqp+FJJLGMW35cLYmmZnl0vztAZxRUoNZJFTCohfjuIJ8I4QBQ==}
 
@@ -6692,6 +6713,12 @@ packages:
 
 snapshots:
 
+  '@ai-sdk/devtools@0.0.1-beta.3':
+    dependencies:
+      '@ai-sdk/provider': 3.0.0-beta.28
+      '@hono/node-server': 1.19.7(hono@4.11.1)
+      hono: 4.11.1
+
   '@ai-sdk/gateway@1.0.11(zod@3.25.76)':
     dependencies:
       '@ai-sdk/provider': 2.0.0
@@ -6740,6 +6767,10 @@ snapshots:
       zod: 3.25.76
 
   '@ai-sdk/provider@2.0.0':
+    dependencies:
+      json-schema: 0.4.0
+
+  '@ai-sdk/provider@3.0.0-beta.28':
     dependencies:
       json-schema: 0.4.0
 
@@ -7912,6 +7943,10 @@ snapshots:
       react-dom: 19.2.1(react@19.2.1)
 
   '@google/generative-ai@0.24.1': {}
+
+  '@hono/node-server@1.19.7(hono@4.11.1)':
+    dependencies:
+      hono: 4.11.1
 
   '@humanwhocodes/config-array@0.13.0':
     dependencies:
@@ -11506,6 +11541,8 @@ snapshots:
   hoist-non-react-statics@3.3.2:
     dependencies:
       react-is: 16.13.1
+
+  hono@4.11.1: {}
 
   html-url-attributes@3.0.1: {}
 
