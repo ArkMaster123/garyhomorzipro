@@ -65,11 +65,18 @@ export async function PATCH(request: Request) {
     return new ChatSDKError('forbidden:vote').toResponse();
   }
 
-  await voteMessage({
-    chatId,
-    messageId,
-    type: type,
-  });
-
-  return new Response('Message voted', { status: 200 });
+  try {
+    await voteMessage({
+      chatId,
+      messageId,
+      type: type,
+    });
+    return new Response('Message voted', { status: 200 });
+  } catch (error) {
+    console.error('Vote error:', error);
+    return new ChatSDKError(
+      'bad_request:vote',
+      'Failed to save vote. The message may not exist.',
+    ).toResponse();
+  }
 }

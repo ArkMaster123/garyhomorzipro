@@ -16,14 +16,15 @@ export interface GatewayModel {
 export const fetchModelsFromGateway = unstable_cache(
   async (): Promise<GatewayModel[]> => {
     try {
-      const response = await fetch(
-        `${process.env.AI_GATEWAY_BASE_URL}/v1/models`,
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.AI_GATEWAY_API_KEY}`,
-          },
-        }
-      );
+      // The models endpoint is at the root /v1/models, not under the SDK's /v1/ai path
+      const baseUrl =
+        process.env.AI_GATEWAY_BASE_URL?.replace('/v1/ai', '') ||
+        'https://ai-gateway.vercel.sh';
+      const response = await fetch(`${baseUrl}/v1/models`, {
+        headers: {
+          Authorization: `Bearer ${process.env.AI_GATEWAY_API_KEY}`,
+        },
+      });
 
       if (!response.ok) {
         console.error(`AI Gateway returned ${response.status}`);
@@ -41,5 +42,5 @@ export const fetchModelsFromGateway = unstable_cache(
   {
     revalidate: 3600, // 1 hour cache
     tags: ['models'],
-  }
+  },
 );

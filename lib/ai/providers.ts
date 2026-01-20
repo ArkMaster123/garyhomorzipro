@@ -8,16 +8,7 @@ import {
 import { devToolsMiddleware } from '@ai-sdk/devtools';
 import { gateway as aiGateway } from '@ai-sdk/gateway';
 import { gateway as gatewayProvider } from './gateway';
-import { isTestEnvironment } from '../constants';
 import { DEFAULT_GATEWAY_MODEL } from './models';
-
-// Import test models - will be replaced with stub in production builds via webpack alias
-import {
-  artifactModel,
-  chatModel,
-  reasoningModel,
-  titleModel,
-} from './models.test';
 
 // Helper function to wrap models with devtools middleware in development
 // Note: @ai-sdk/devtools requires AI SDK 6 (V3 models), but we're on AI SDK 5 (V2)
@@ -54,29 +45,21 @@ function wrapModelWithDevtools<T extends Parameters<typeof wrapLanguageModel>[0]
   return model;
 }
 
-// Create dynamic provider that can handle both internal models and gateway models
-export const myProvider = isTestEnvironment
-  ? customProvider({
-      languageModels: {
-        'chat-model': chatModel,
-        'chat-model-reasoning': reasoningModel,
-        'title-model': titleModel,
-        'artifact-model': artifactModel,
-      },
-    })
-  : customProvider({
-      languageModels: {
-        // Legacy internal models - wrapped with devtools in development
-        // Using openai/gpt-oss-120b as default (Cerebras-hosted, fast & reliable)
-        'chat-model': wrapModelWithDevtools(aiGateway('openai/gpt-oss-120b')),
-        'chat-model-reasoning': wrapModelWithDevtools(
-          aiGateway('openai/gpt-oss-120b'),
-          [extractReasoningMiddleware({ tagName: 'think' })]
-        ),
-        'title-model': wrapModelWithDevtools(aiGateway('openai/gpt-oss-120b')),
-        'artifact-model': wrapModelWithDevtools(aiGateway('openai/gpt-oss-120b')),
-      },
-    });
+// Create provider with gateway models
+// Note: Test models are loaded separately in test setup (see tests/setup.ts)
+export const myProvider = customProvider({
+  languageModels: {
+    // Legacy internal models - wrapped with devtools in development
+    // Using openai/gpt-oss-120b as default (Cerebras-hosted, fast & reliable)
+    'chat-model': wrapModelWithDevtools(aiGateway('openai/gpt-oss-120b')),
+    'chat-model-reasoning': wrapModelWithDevtools(
+      aiGateway('openai/gpt-oss-120b'),
+      [extractReasoningMiddleware({ tagName: 'think' })]
+    ),
+    'title-model': wrapModelWithDevtools(aiGateway('openai/gpt-oss-120b')),
+    'artifact-model': wrapModelWithDevtools(aiGateway('openai/gpt-oss-120b')),
+  },
+});
 
 // Models that support reasoning and should have reasoning middleware
 const REASONING_MODELS = [
