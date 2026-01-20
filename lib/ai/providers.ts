@@ -67,14 +67,14 @@ export const myProvider = isTestEnvironment
   : customProvider({
       languageModels: {
         // Legacy internal models - wrapped with devtools in development
-        // Using correct AI Gateway model IDs (without version suffixes)
-        'chat-model': wrapModelWithDevtools(aiGateway('xai/grok-2-vision')),
+        // Using openai/gpt-oss-120b as default (Cerebras-hosted, fast & reliable)
+        'chat-model': wrapModelWithDevtools(aiGateway('openai/gpt-oss-120b')),
         'chat-model-reasoning': wrapModelWithDevtools(
-          aiGateway('xai/grok-3-mini'),
+          aiGateway('openai/gpt-oss-120b'),
           [extractReasoningMiddleware({ tagName: 'think' })]
         ),
-        'title-model': wrapModelWithDevtools(aiGateway('xai/grok-2')),
-        'artifact-model': wrapModelWithDevtools(aiGateway('xai/grok-2')),
+        'title-model': wrapModelWithDevtools(aiGateway('openai/gpt-oss-120b')),
+        'artifact-model': wrapModelWithDevtools(aiGateway('openai/gpt-oss-120b')),
       },
     });
 
