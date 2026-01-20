@@ -59,8 +59,6 @@ export function Chat({
 
   const handleModelChange = useCallback((newModelId: string) => {
     setSelectedModelId(newModelId);
-    // TODO: Save to localStorage or URL params for persistence
-    console.log('Model changed to:', newModelId);
   }, []);
 
   const {

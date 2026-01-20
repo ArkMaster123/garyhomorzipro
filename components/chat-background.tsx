@@ -13,8 +13,7 @@ export function ChatBackground({ children }: ChatBackgroundProps) {
 
   useEffect(() => {
     setMounted(true);
-    console.log('ChatBackground theme:', theme, 'resolvedTheme:', resolvedTheme);
-  }, [theme, resolvedTheme]);
+  }, []);
 
   if (!mounted) {
     return <>{children}</>;

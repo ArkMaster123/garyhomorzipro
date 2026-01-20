@@ -42,10 +42,6 @@ export function PureMessageActions({
               className="py-1 px-2 h-fit text-muted-foreground"
               variant="outline"
               onClick={async () => {
-                // Debug: Log the message structure
-                console.log('Message parts:', message.parts);
-                console.log('Message structure:', message);
-
                 // First try to get text content
                 const textFromParts = message.parts
                   ?.filter((part) => part.type === 'text')
@@ -62,14 +58,9 @@ export function PureMessageActions({
 
                 // Check for tool-generateImage parts (image generation)
                 const imageParts = message.parts?.filter((part) => part.type === 'tool-generateImage');
-                console.log('Image parts:', imageParts);
-                
+
                 if (imageParts && imageParts.length > 0) {
                   for (const imagePart of imageParts) {
-                    console.log('Image part details:', imagePart);
-                    console.log('Image part input:', imagePart.input);
-                    // console.log('Image part output:', imagePart.output); // Removed - output may not exist
-                    
                     // Try multiple possible locations for the prompt
                     let prompt = null;
                     
@@ -98,9 +89,7 @@ export function PureMessageActions({
                         prompt = textValue;
                       }
                     }
-                    
-                    console.log('Found prompt:', prompt);
-                    
+
                     if (prompt) {
                       // Copy the image prompt
                       await copyToClipboard(prompt);
@@ -111,15 +100,13 @@ export function PureMessageActions({
                 }
 
                 // Check for other tool call types - use a more generic approach
-                const toolCallParts = message.parts?.filter((part) => 
+                const toolCallParts = message.parts?.filter((part) =>
                   'toolName' in part || 'result' in part
                 );
-                console.log('Tool call parts:', toolCallParts);
-                
+
                 if (toolCallParts && toolCallParts.length > 0) {
                   // Look for other tool results
                   for (const toolCall of toolCallParts) {
-                    console.log('Tool call:', toolCall);
                     if ('toolName' in toolCall && 'result' in toolCall && 
                         (toolCall as any).toolName === 'generateImage' && 
                         (toolCall as any).result?.output?.success) {
@@ -142,6 +129,7 @@ export function PureMessageActions({
                 // If still nothing, show error
                 toast.error("There's no content to copy!");
               }}
+              aria-label="Copy message content"
             >
               <CopyIcon />
             </Button>
@@ -156,6 +144,7 @@ export function PureMessageActions({
               className="py-1 px-2 h-fit text-muted-foreground !pointer-events-auto"
               disabled={vote?.isUpvoted}
               variant="outline"
+              aria-label="Upvote this response"
               onClick={async () => {
                 const upvote = fetch('/api/vote', {
                   method: 'PATCH',
@@ -209,6 +198,7 @@ export function PureMessageActions({
               className="py-1 px-2 h-fit text-muted-foreground !pointer-events-auto"
               variant="outline"
               disabled={vote && !vote.isUpvoted}
+              aria-label="Downvote this response"
               onClick={async () => {
                 const downvote = fetch('/api/vote', {
                   method: 'PATCH',

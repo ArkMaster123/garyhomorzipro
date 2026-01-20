@@ -569,6 +569,8 @@ function PureAttachmentsButton({
         }}
         disabled={status !== 'ready'}
         variant={isWebSearchMode ? "outline" : "ghost"}
+        aria-label={isWebSearchMode ? "Disable web search mode" : "Enable web search mode"}
+        aria-pressed={isWebSearchMode}
       >
         <SearchIcon size={14} />
       </Button>
@@ -668,6 +670,7 @@ function PureStopButton({
         stop();
         setMessages((messages) => messages);
       }}
+      aria-label="Stop generating response"
     >
       <StopIcon size={14} />
     </Button>
@@ -694,6 +697,7 @@ function PureSendButton({
         submitForm();
       }}
       disabled={input.length === 0 || uploadQueue.length > 0}
+      aria-label="Send message"
     >
       <ArrowUpIcon size={14} />
     </Button>
