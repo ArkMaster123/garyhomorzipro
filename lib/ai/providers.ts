@@ -98,9 +98,8 @@ export function createDynamicModel(modelId: string) {
   
   // Handle gateway models
   if (modelId.includes('/')) {
-    // Call the gateway provider directly (not .languageModel)
-    // The gateway provider is already a function that creates language models
-    const baseModel = gatewayProvider(modelId);
+    // Use the gateway provider's languageModel method
+    const baseModel = gatewayProvider.languageModel(modelId);
     
     // Build middleware array
     const middlewares: Parameters<typeof wrapLanguageModel>[0]['middleware'][] = [];
@@ -138,7 +137,7 @@ export function createDynamicModel(modelId: string) {
   
   // Fallback to default gateway model
   console.warn(`Unknown model ID: ${modelId}, falling back to default`);
-  const fallbackModel = gatewayProvider(DEFAULT_GATEWAY_MODEL);
+  const fallbackModel = gatewayProvider.languageModel(DEFAULT_GATEWAY_MODEL);
   
   // Build middleware array for fallback
   const fallbackMiddlewares: Parameters<typeof wrapLanguageModel>[0]['middleware'][] = [];

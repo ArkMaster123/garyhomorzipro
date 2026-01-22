@@ -12,8 +12,9 @@ export const gateway = process.env.AI_GATEWAY_API_KEY
   ? createGateway({
       apiKey: process.env.AI_GATEWAY_API_KEY,
       // Only set baseURL if explicitly provided, otherwise use default
+      // Remove /v1 suffix if present (SDK adds it automatically)
       ...(process.env.AI_GATEWAY_BASE_URL && {
-        baseURL: process.env.AI_GATEWAY_BASE_URL,
+        baseURL: process.env.AI_GATEWAY_BASE_URL.replace(/\/v1\/?$/, ''),
       }),
     })
   : null;
