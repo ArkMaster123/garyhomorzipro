@@ -55,6 +55,11 @@ let globalStreamContext: ResumableStreamContext | null = null;
 export function getStreamContext() {
   if (!globalStreamContext) {
     try {
+      // Use REDIS26_REDIS_URL if available, otherwise fall back to REDIS_URL
+      if (process.env.REDIS26_REDIS_URL && !process.env.REDIS_URL) {
+        process.env.REDIS_URL = process.env.REDIS26_REDIS_URL;
+      }
+      
       globalStreamContext = createResumableStreamContext({
         waitUntil: after,
       });
