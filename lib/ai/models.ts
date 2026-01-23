@@ -21,68 +21,112 @@ export const chatModels: Array<ChatModel> = [
 
 // Gateway provider model groups - EXPANDED! 🚀
 export const PROVIDER_GROUPS = {
-  'OpenAI': [
-    'openai/o3', 'openai/o3-mini', 'openai/o1',
-    'openai/gpt-5', 'openai/gpt-5-mini', 'openai/gpt-5-nano',
-    'openai/gpt-4.1', 'openai/gpt-4.1-mini',
-    'openai/gpt-4o', 'openai/gpt-4o-mini', 'openai/gpt-4-turbo',
-    'openai/gpt-3.5-turbo'
+  OpenAI: [
+    'openai/o3',
+    'openai/o3-mini',
+    'openai/o1',
+    'openai/gpt-5',
+    'openai/gpt-5-mini',
+    'openai/gpt-5-nano',
+    'openai/gpt-4.1',
+    'openai/gpt-4.1-mini',
+    'openai/gpt-4o',
+    'openai/gpt-4o-mini',
+    'openai/gpt-4-turbo',
+    'openai/gpt-3.5-turbo',
   ],
-  'Anthropic': [
-    'anthropic/claude-opus-4.1', 'anthropic/claude-opus-4', 'anthropic/claude-sonnet-4',
-    'anthropic/claude-3.7-sonnet', 'anthropic/claude-3.5-sonnet', 'anthropic/claude-3.5-haiku',
-    'anthropic/claude-3-opus', 'anthropic/claude-3-haiku'
+  Anthropic: [
+    'anthropic/claude-opus-4.1',
+    'anthropic/claude-opus-4',
+    'anthropic/claude-sonnet-4',
+    'anthropic/claude-3.7-sonnet',
+    'anthropic/claude-3.5-sonnet',
+    'anthropic/claude-3.5-haiku',
+    'anthropic/claude-3-opus',
+    'anthropic/claude-3-haiku',
   ],
-  'xAI': [
-    'xai/grok-4', 'xai/grok-3', 'xai/grok-3-fast',
-    'xai/grok-3-mini', 'xai/grok-3-mini-fast',
-    'xai/grok-2-vision', 'xai/grok-2'
+  xAI: [
+    'xai/grok-4',
+    'xai/grok-3',
+    'xai/grok-3-fast',
+    'xai/grok-3-mini',
+    'xai/grok-3-mini-fast',
+    'xai/grok-2-vision',
+    'xai/grok-2',
   ],
-  'Groq': [
-    'groq/llama-3.1-405b', 'groq/llama-3.1-70b', 'groq/llama-3.1-8b',
-    'groq/llama-3.1-70b-instant', 'groq/llama-3.1-8b-instant',
-    'groq/mixtral-8x7b-32768', 'groq/gemma-2-9b-it', 'groq/gemma-2-27b-it'
+  Groq: [
+    'groq/llama-3.1-405b',
+    'groq/llama-3.1-70b',
+    'groq/llama-3.1-8b',
+    'groq/llama-3.1-70b-instant',
+    'groq/llama-3.1-8b-instant',
+    'groq/mixtral-8x7b-32768',
+    'groq/gemma-2-9b-it',
+    'groq/gemma-2-27b-it',
   ],
-  'DeepSeek': [
-    'deepseek/deepseek-r1', 'deepseek/deepseek-v3.1', 'deepseek/deepseek-v3.1-base',
-    'deepseek/deepseek-v3', 'deepseek/deepseek-r1-distill-llama-70b'
+  DeepSeek: [
+    'deepseek/deepseek-r1',
+    'deepseek/deepseek-v3.1',
+    'deepseek/deepseek-v3.1-base',
+    'deepseek/deepseek-v3',
+    'deepseek/deepseek-r1-distill-llama-70b',
   ],
-  'Google': [
-    'google/gemini-2.5-pro', 'google/gemini-2.5-flash', 'google/gemini-2.5-flash-lite',
-    'google/gemini-2.5-flash-image-preview', 'google/gemini-2.0-flash', 'google/gemini-2.0-flash-lite', 'google/gemma-2-9b'
+  Google: [
+    'google/gemini-2.5-pro',
+    'google/gemini-2.5-flash',
+    'google/gemini-2.5-flash-lite',
+    'google/gemini-2.5-flash-image-preview',
+    'google/gemini-2.0-flash',
+    'google/gemini-2.0-flash-lite',
+    'google/gemma-2-9b',
   ],
-  'Mistral': [
-    'mistral/magistral-medium', 'mistral/magistral-small', 'mistral/mistral-large', 'mistral/mistral-small',
-    'mistral/codestral', 'mistral/devstral-small', 'mistral/pixtral-large', 'mistral/pixtral-12b',
-    'mistral/mixtral-8x22b-instruct', 'mistral/mistral-saba-24b', 'mistral/ministral-8b', 'mistral/ministral-3b'
+  Mistral: [
+    'mistral/magistral-medium',
+    'mistral/magistral-small',
+    'mistral/mistral-large',
+    'mistral/mistral-small',
+    'mistral/codestral',
+    'mistral/devstral-small',
+    'mistral/pixtral-large',
+    'mistral/pixtral-12b',
+    'mistral/mixtral-8x22b-instruct',
+    'mistral/mistral-saba-24b',
+    'mistral/ministral-8b',
+    'mistral/ministral-3b',
   ],
-  'Perplexity': [
-    'perplexity/sonar-reasoning-pro', 'perplexity/sonar-reasoning',
-    'perplexity/sonar-pro', 'perplexity/sonar'
+  Perplexity: [
+    'perplexity/sonar-reasoning-pro',
+    'perplexity/sonar-reasoning',
+    'perplexity/sonar-pro',
+    'perplexity/sonar',
   ],
-  'Alibaba': [
-    'alibaba/qwen-3-235b', 'alibaba/qwen-3-32b', 'alibaba/qwen-3-30b',
-    'alibaba/qwen-3-14b', 'alibaba/qwen3-coder'
+  Alibaba: [
+    'alibaba/qwen-3-235b',
+    'alibaba/qwen-3-32b',
+    'alibaba/qwen-3-30b',
+    'alibaba/qwen-3-14b',
+    'alibaba/qwen3-coder',
   ],
-  'Amazon': [
-    'amazon/nova-pro', 'amazon/nova-lite', 'amazon/nova-micro'
+  Amazon: ['amazon/nova-pro', 'amazon/nova-lite', 'amazon/nova-micro'],
+  Cohere: ['cohere/command-r-plus', 'cohere/command-r', 'cohere/command-a'],
+  Cerebras: [
+    // Note: Cerebras-hosted models require custom gateway - not available on default Vercel AI Gateway
+    // Use OpenAI models instead for production
   ],
-  'Cohere': [
-    'cohere/command-r-plus', 'cohere/command-r', 'cohere/command-a'
+  Other: [
+    'moonshotai/kimi-k2',
+    'morph/morph-v3-large',
+    'morph/morph-v3-fast',
+    'inception/mercury-coder-small',
+    'zai/glm-4.5',
+    'zai/glm-4.5v',
+    'vercel/v0-1.5-md',
   ],
-  'Cerebras': [
-    'openai/gpt-oss-120b',      // GPT-OSS 120B - Excellent function calling! 🚀
-    'openai/gpt-oss-20b',        // GPT-OSS 20B - Efficient model
-    'openai/gpt-oss-safeguard-20b' // GPT-OSS Safeguard 20B - Safety-focused
-  ],
-  'Other': [
-    'moonshotai/kimi-k2', 'morph/morph-v3-large', 'morph/morph-v3-fast',
-    'inception/mercury-coder-small', 'zai/glm-4.5', 'zai/glm-4.5v', 'vercel/v0-1.5-md'
-  ]
 };
 
-// Default gateway model - Using OpenAI GPT-OSS-120B for excellent function calling and generalist capabilities! 🚀
-export const DEFAULT_GATEWAY_MODEL = "openai/gpt-oss-120b";
+// Default gateway model - Using OpenAI GPT-4o for reliable function calling and broad availability
+// Note: gpt-oss models are Cerebras-hosted and may not be available on Vercel AI Gateway
+export const DEFAULT_GATEWAY_MODEL = 'openai/gpt-4o-mini';
 
 // Image generation models configuration
 export const IMAGE_GENERATION_MODELS = {
