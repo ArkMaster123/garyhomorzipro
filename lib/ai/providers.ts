@@ -99,7 +99,22 @@ export function createDynamicModel(modelId: string) {
   // Handle gateway models
   if (modelId.includes('/')) {
     // Use the gateway provider's languageModel method
-    const baseModel = gatewayProvider.languageModel(modelId);
+    // If gatewayProvider doesn't have languageModel, fall back to default aiGateway
+    let baseModel;
+    try {
+      if (gatewayProvider && typeof gatewayProvider.languageModel === 'function') {
+        baseModel = gatewayProvider.languageModel(modelId);
+      } else {
+        // Fallback to default gateway function
+        console.warn('Custom gateway provider missing languageModel, using default aiGateway');
+        baseModel = aiGateway(modelId);
+      }
+    } catch (error: any) {
+      console.error('Error creating model with gateway:', error);
+      // Fallback to default gateway function
+      console.warn('Falling back to default aiGateway');
+      baseModel = aiGateway(modelId);
+    }
     
     // Build middleware array
     const middlewares: Parameters<typeof wrapLanguageModel>[0]['middleware'][] = [];
@@ -137,7 +152,17 @@ export function createDynamicModel(modelId: string) {
   
   // Fallback to default gateway model
   console.warn(`Unknown model ID: ${modelId}, falling back to default`);
-  const fallbackModel = gatewayProvider.languageModel(DEFAULT_GATEWAY_MODEL);
+  let fallbackModel;
+  try {
+    if (gatewayProvider && typeof gatewayProvider.languageModel === 'function') {
+      fallbackModel = gatewayProvider.languageModel(DEFAULT_GATEWAY_MODEL);
+    } else {
+      fallbackModel = aiGateway(DEFAULT_GATEWAY_MODEL);
+    }
+  } catch (error: any) {
+    console.error('Error creating fallback model:', error);
+    fallbackModel = aiGateway(DEFAULT_GATEWAY_MODEL);
+  }
   
   // Build middleware array for fallback
   const fallbackMiddlewares: Parameters<typeof wrapLanguageModel>[0]['middleware'][] = [];
