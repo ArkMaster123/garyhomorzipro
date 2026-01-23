@@ -65,13 +65,13 @@ export async function searchKnowledgeBase(
     const getEmbeddingModel = (modelString: string) => {
       switch (modelString) {
         case 'openai:text-embedding-3-small':
-          return gateway!.textEmbeddingModel('openai/text-embedding-3-small');
+          return gateway!.embeddingModel('openai/text-embedding-3-small');
         case 'openai:text-embedding-3-large':
-          return gateway!.textEmbeddingModel('openai/text-embedding-3-large');
+          return gateway!.embeddingModel('openai/text-embedding-3-large');
         case 'openai:text-embedding-ada-002':
-          return gateway!.textEmbeddingModel('openai/text-embedding-ada-002');
+          return gateway!.embeddingModel('openai/text-embedding-ada-002');
         default:
-          return gateway!.textEmbeddingModel('openai/text-embedding-3-small'); // fallback
+          return gateway!.embeddingModel('openai/text-embedding-3-small'); // fallback
       }
     };
 

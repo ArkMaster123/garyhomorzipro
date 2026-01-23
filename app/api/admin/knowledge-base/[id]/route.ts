@@ -124,7 +124,7 @@ export async function PUT(
       // Regenerate embedding using gateway
       // Non-null assertion is safe here because we checked gateway above
       const { embedding } = await embed({
-        model: gateway!.textEmbeddingModel(embeddingModel),
+        model: gateway!.embeddingModel(embeddingModel),
         value: content,
       });
       updateData.embedding = embedding;

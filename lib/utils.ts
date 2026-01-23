@@ -1,6 +1,6 @@
 import type {
-  CoreAssistantMessage,
-  CoreToolMessage,
+  AssistantModelMessage,
+  ToolModelMessage,
   UIMessage,
   UIMessagePart,
 } from 'ai';
@@ -21,7 +21,7 @@ export const fetcher = async (url: string) => {
   if (!response.ok) {
     // Check content-type before parsing JSON
     const contentType = response.headers.get('content-type');
-    
+
     if (contentType?.includes('application/json')) {
       try {
         const { code, cause } = await response.json();
@@ -36,10 +36,17 @@ export const fetcher = async (url: string) => {
     } else {
       // Non-JSON response (likely HTML redirect)
       const text = await response.text();
-      if (response.status === 307 || response.status === 302 || text.includes('<!DOCTYPE')) {
+      if (
+        response.status === 307 ||
+        response.status === 302 ||
+        text.includes('<!DOCTYPE')
+      ) {
         throw new ChatSDKError('unauthorized:api', 'Authentication required');
       }
-      throw new ChatSDKError('bad_request:api', `HTTP ${response.status}: ${response.statusText}`);
+      throw new ChatSDKError(
+        'bad_request:api',
+        `HTTP ${response.status}: ${response.statusText}`,
+      );
     }
   }
 
@@ -51,7 +58,10 @@ export const fetcher = async (url: string) => {
     if (text.includes('<!DOCTYPE')) {
       throw new ChatSDKError('unauthorized:api', 'Authentication required');
     }
-    throw new ChatSDKError('bad_request:api', 'Expected JSON response but received non-JSON content');
+    throw new ChatSDKError(
+      'bad_request:api',
+      'Expected JSON response but received non-JSON content',
+    );
   }
 
   return response.json();
@@ -66,9 +76,9 @@ export async function fetchWithErrorHandlers(
 
     if (!response.ok) {
       // Try to parse as JSON, but handle non-JSON responses
-      let errorData;
+      let errorData: { code?: string; message?: string; cause?: string } = {};
       const contentType = response.headers.get('content-type');
-      
+
       if (contentType?.includes('application/json')) {
         try {
           errorData = await response.json();
@@ -84,12 +94,17 @@ export async function fetchWithErrorHandlers(
         const text = await response.text();
         errorData = {
           code: `http_${response.status}`,
-          message: text.substring(0, 200) || `HTTP ${response.status}: ${response.statusText}`,
+          message:
+            text.substring(0, 200) ||
+            `HTTP ${response.status}: ${response.statusText}`,
         };
       }
-      
+
       const { code, message, cause } = errorData;
-      throw new ChatSDKError((code as ErrorCode) || 'bad_request:chat', message || cause);
+      throw new ChatSDKError(
+        (code as ErrorCode) || 'bad_request:chat',
+        message || cause,
+      );
     }
 
     return response;
@@ -97,7 +112,7 @@ export async function fetchWithErrorHandlers(
     if (error instanceof ChatSDKError) {
       throw error;
     }
-    
+
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
       throw new ChatSDKError('offline:chat');
     }
@@ -126,7 +141,7 @@ export function generateUUID(): string {
   });
 }
 
-type ResponseMessageWithoutId = CoreToolMessage | CoreAssistantMessage;
+type ResponseMessageWithoutId = ToolModelMessage | AssistantModelMessage;
 type ResponseMessage = ResponseMessageWithoutId & { id: string };
 
 export function getMostRecentUserMessage(messages: Array<UIMessage>) {

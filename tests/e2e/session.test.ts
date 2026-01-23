@@ -15,9 +15,10 @@ test.describe
         throw new Error('Failed to load page');
       }
 
-      let request = response.request();
+      let request: ReturnType<typeof response.request> | null =
+        response.request();
 
-      const chain = [];
+      const chain: string[] = [];
 
       while (request) {
         chain.unshift(request.url());
@@ -57,9 +58,10 @@ test.describe
         throw new Error('Failed to load page');
       }
 
-      let request = response.request();
+      let request: ReturnType<typeof response.request> | null =
+        response.request();
 
-      const chain = [];
+      const chain: string[] = [];
 
       while (request) {
         chain.unshift(request.url());

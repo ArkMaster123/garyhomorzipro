@@ -1,7 +1,7 @@
 import { myProvider } from '@/lib/ai/providers';
 import { sheetPrompt, updateDocumentPrompt } from '@/lib/ai/prompts';
 import { createDocumentHandler } from '@/lib/artifacts/server';
-import { streamObject } from 'ai';
+import { streamText, Output } from 'ai';
 import { z } from 'zod';
 
 export const sheetDocumentHandler = createDocumentHandler<'sheet'>({
@@ -9,12 +9,14 @@ export const sheetDocumentHandler = createDocumentHandler<'sheet'>({
   onCreateDocument: async ({ title, dataStream }) => {
     let draftContent = '';
 
-    const { fullStream } = streamObject({
+    const { partialOutputStream } = streamText({
       model: myProvider.languageModel('artifact-model'),
       system: sheetPrompt,
       prompt: title,
-      schema: z.object({
-        csv: z.string().describe('CSV data'),
+      output: Output.object({
+        schema: z.object({
+          csv: z.string().describe('CSV data'),
+        }),
       }),
       providerOptions: {
         gateway: {
@@ -23,22 +25,15 @@ export const sheetDocumentHandler = createDocumentHandler<'sheet'>({
       },
     });
 
-    for await (const delta of fullStream) {
-      const { type } = delta;
+    for await (const delta of partialOutputStream) {
+      if (delta && delta.csv) {
+        dataStream.write({
+          type: 'data-sheetDelta',
+          data: delta.csv,
+          transient: true,
+        });
 
-      if (type === 'object') {
-        const { object } = delta;
-        const { csv } = object;
-
-        if (csv) {
-          dataStream.write({
-            type: 'data-sheetDelta',
-            data: csv,
-            transient: true,
-          });
-
-          draftContent = csv;
-        }
+        draftContent = delta.csv;
       }
     }
 
@@ -53,12 +48,14 @@ export const sheetDocumentHandler = createDocumentHandler<'sheet'>({
   onUpdateDocument: async ({ document, description, dataStream }) => {
     let draftContent = '';
 
-    const { fullStream } = streamObject({
+    const { partialOutputStream } = streamText({
       model: myProvider.languageModel('artifact-model'),
       system: updateDocumentPrompt(document.content, 'sheet'),
       prompt: description,
-      schema: z.object({
-        csv: z.string(),
+      output: Output.object({
+        schema: z.object({
+          csv: z.string(),
+        }),
       }),
       providerOptions: {
         gateway: {
@@ -67,22 +64,15 @@ export const sheetDocumentHandler = createDocumentHandler<'sheet'>({
       },
     });
 
-    for await (const delta of fullStream) {
-      const { type } = delta;
+    for await (const delta of partialOutputStream) {
+      if (delta && delta.csv) {
+        dataStream.write({
+          type: 'data-sheetDelta',
+          data: delta.csv,
+          transient: true,
+        });
 
-      if (type === 'object') {
-        const { object } = delta;
-        const { csv } = object;
-
-        if (csv) {
-          dataStream.write({
-            type: 'data-sheetDelta',
-            data: csv,
-            transient: true,
-          });
-
-          draftContent = csv;
-        }
+        draftContent = delta.csv;
       }
     }
 

@@ -298,7 +298,7 @@ When using web search results, integrate them naturally with your core business 
         const result = streamText({
           model,
           system: enhancedSystemPrompt,
-          messages: convertToModelMessages(uiMessages),
+          messages: await convertToModelMessages(uiMessages),
           stopWhen: stepCountIs(5),
           experimental_activeTools:
             effectiveModelId === 'chat-model-reasoning'

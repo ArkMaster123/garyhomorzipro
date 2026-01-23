@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { streamObject } from 'ai';
+import { streamText, Output } from 'ai';
 import { myProvider } from '@/lib/ai/providers';
 import { codePrompt, updateDocumentPrompt } from '@/lib/ai/prompts';
 import { createDocumentHandler } from '@/lib/artifacts/server';
@@ -9,12 +9,14 @@ export const codeDocumentHandler = createDocumentHandler<'code'>({
   onCreateDocument: async ({ title, dataStream }) => {
     let draftContent = '';
 
-    const { fullStream } = streamObject({
+    const { partialOutputStream } = streamText({
       model: myProvider.languageModel('artifact-model'),
       system: codePrompt,
       prompt: title,
-      schema: z.object({
-        code: z.string(),
+      output: Output.object({
+        schema: z.object({
+          code: z.string(),
+        }),
       }),
       providerOptions: {
         gateway: {
@@ -23,22 +25,15 @@ export const codeDocumentHandler = createDocumentHandler<'code'>({
       },
     });
 
-    for await (const delta of fullStream) {
-      const { type } = delta;
+    for await (const delta of partialOutputStream) {
+      if (delta && delta.code) {
+        dataStream.write({
+          type: 'data-codeDelta',
+          data: delta.code ?? '',
+          transient: true,
+        });
 
-      if (type === 'object') {
-        const { object } = delta;
-        const { code } = object;
-
-        if (code) {
-          dataStream.write({
-            type: 'data-codeDelta',
-            data: code ?? '',
-            transient: true,
-          });
-
-          draftContent = code;
-        }
+        draftContent = delta.code;
       }
     }
 
@@ -47,12 +42,14 @@ export const codeDocumentHandler = createDocumentHandler<'code'>({
   onUpdateDocument: async ({ document, description, dataStream }) => {
     let draftContent = '';
 
-    const { fullStream } = streamObject({
+    const { partialOutputStream } = streamText({
       model: myProvider.languageModel('artifact-model'),
       system: updateDocumentPrompt(document.content, 'code'),
       prompt: description,
-      schema: z.object({
-        code: z.string(),
+      output: Output.object({
+        schema: z.object({
+          code: z.string(),
+        }),
       }),
       providerOptions: {
         gateway: {
@@ -61,22 +58,15 @@ export const codeDocumentHandler = createDocumentHandler<'code'>({
       },
     });
 
-    for await (const delta of fullStream) {
-      const { type } = delta;
+    for await (const delta of partialOutputStream) {
+      if (delta && delta.code) {
+        dataStream.write({
+          type: 'data-codeDelta',
+          data: delta.code ?? '',
+          transient: true,
+        });
 
-      if (type === 'object') {
-        const { object } = delta;
-        const { code } = object;
-
-        if (code) {
-          dataStream.write({
-            type: 'data-codeDelta',
-            data: code ?? '',
-            transient: true,
-          });
-
-          draftContent = code;
-        }
+        draftContent = delta.code;
       }
     }
 

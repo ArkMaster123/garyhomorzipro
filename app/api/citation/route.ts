@@ -1,4 +1,4 @@
-import { streamObject } from 'ai';
+import { streamText, Output } from 'ai';
 import { citationSchema } from '@/lib/schemas/citation';
 
 // Allow streaming responses up to 30 seconds
@@ -7,9 +7,9 @@ export const maxDuration = 30;
 export async function POST(req: Request) {
   const { prompt } = await req.json();
 
-  const result = streamObject({
+  const result = streamText({
     model: 'openai/gpt-4o',
-    schema: citationSchema,
+    output: Output.object({ schema: citationSchema }),
     prompt: `Generate a well-researched paragraph about ${prompt} with proper citations. 
     
     Include:
@@ -23,5 +23,3 @@ export async function POST(req: Request) {
 
   return result.toTextStreamResponse();
 }
-
-

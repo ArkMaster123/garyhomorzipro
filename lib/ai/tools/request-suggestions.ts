@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import type { Session } from 'next-auth';
-import { streamObject, tool, type UIMessageStreamWriter } from 'ai';
+import { streamText, Output, tool, type UIMessageStreamWriter } from 'ai';
 import { getDocumentById, saveSuggestions } from '@/lib/db/queries';
 import type { Suggestion } from '@/lib/db/schema';
 import { generateUUID } from '@/lib/utils';
@@ -36,16 +36,19 @@ export const requestSuggestions = ({
         Omit<Suggestion, 'userId' | 'createdAt' | 'documentCreatedAt'>
       > = [];
 
-      const { elementStream } = streamObject({
+      const { elementStream } = streamText({
         model: myProvider.languageModel('artifact-model'),
         system:
           'You are a help writing assistant. Given a piece of writing, please offer suggestions to improve the piece of writing and describe the change. It is very important for the edits to contain full sentences instead of just words. Max 5 suggestions.',
         prompt: document.content,
-        output: 'array',
-        schema: z.object({
-          originalSentence: z.string().describe('The original sentence'),
-          suggestedSentence: z.string().describe('The suggested sentence'),
-          description: z.string().describe('The description of the suggestion'),
+        output: Output.array({
+          element: z.object({
+            originalSentence: z.string().describe('The original sentence'),
+            suggestedSentence: z.string().describe('The suggested sentence'),
+            description: z
+              .string()
+              .describe('The description of the suggestion'),
+          }),
         }),
         providerOptions: {
           gateway: {
